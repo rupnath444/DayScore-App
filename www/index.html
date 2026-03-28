@@ -11,20 +11,26 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
 <style>
 [data-theme="dark"]{
-  --bg:#0c0c0f;--surface:#141418;--surface2:#1e1e25;--surface3:#26262f;
-  --border:#2a2a35;--border2:#353545;--text:#e2e2ec;--muted:#6a6a82;--muted2:#4a4a60;
-  --green:#1fcf72;--green-bg:#0f2a1c;--green-border:#1a5535;--green-dim:#17a55a;
-  --red:#e84444;--red-bg:#2a0f0f;--red-border:#5a1a1a;--red-dim:#c43535;
-  --accent:#7b6cf8;--accent-bg:#1a1640;--yellow:#f5c430;--yellow-bg:#2a2210;
-  --future:#1e1e25;--shadow:rgba(0,0,0,0.5);--overlay:rgba(0,0,0,0.72);
+  --bg:#000000;--surface:#121212;--surface2:#1E1E1E;--surface3:#151515;
+  --border:#2A2A2A;--border2:#333333;--text:#FFFFFF;--muted:#888888;--muted2:#666666;
+  --green:#00E676;--green-bg:#0C2E22;--green-border:#13784C;--green-dim:#00CD69;
+  --red:#FF5252;--red-bg:#2E1414;--red-border:#7A2B2B;--red-dim:#E84949;
+  --accent:#BB86FC;--accent-bg:#2B1E36;--yellow:#F5C430;--yellow-bg:#2A2210;
+  --future:#141414;--shadow:rgba(0,0,0,0);--overlay:rgba(0,0,0,0.78);
+  --accent-glow:rgba(187,134,252,.35);
+  --utility-bg:#121212;--utility-border:#1e2433;
+  --pomo-fill:#8c6bff;--pomo-track:#2a3448;--pomo-text:#d8d0ff;--pomo-core:#0d121c;--pomo-core-border:#2a3448;--pomo-glow:rgba(140,107,255,.6);
 }
 [data-theme="light"]{
-  --bg:#f0f0f5;--surface:#ffffff;--surface2:#f5f5fa;--surface3:#eaeaf2;
-  --border:#dddde8;--border2:#c8c8d8;--text:#1a1a2e;--muted:#6b6b88;--muted2:#9999b0;
-  --green:#0ea855;--green-bg:#e6f7ee;--green-border:#a3dbb8;--green-dim:#0a8a44;
-  --red:#d63030;--red-bg:#fdeaea;--red-border:#f0aaaa;--red-dim:#b02525;
-  --accent:#5b4ce8;--accent-bg:#eeecfd;--yellow:#d4920a;--yellow-bg:#fef5e0;
-  --future:#f0f0f5;--shadow:rgba(0,0,0,0.12);--overlay:rgba(0,0,0,0.45);
+  --bg:#FDFBF7;--surface:#F5F1E6;--surface2:#F1EBDD;--surface3:#E9E1D0;
+  --border:#E3DAC8;--border2:#D6CBB6;--text:#2C3E50;--muted:#7F8C8D;--muted2:#95A5A6;
+  --green:#55B581;--green-bg:#E8F6EE;--green-border:#A7D9BF;--green-dim:#3E9F6D;
+  --red:#E17055;--red-bg:#FBE9E4;--red-border:#F3C2B5;--red-dim:#CF6048;
+  --accent:#6C5CE7;--accent-bg:#ECE9FF;--yellow:#D4A35F;--yellow-bg:#F8EBD6;
+  --future:#F6F1E7;--shadow:rgba(44,62,80,0.12);--overlay:rgba(44,62,80,0.35);
+  --accent-glow:rgba(108,92,231,.28);
+  --utility-bg:#f6efe2;--utility-border:#d8ccb7;
+  --pomo-fill:#6C5CE7;--pomo-track:#d9cee8;--pomo-text:#3f3290;--pomo-core:#fbf7ef;--pomo-core-border:#cbbddb;--pomo-glow:rgba(108,92,231,.45);
 }
 
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
@@ -67,7 +73,7 @@ body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);min
 header{display:flex;flex-direction:column;align-items:center;padding:12px 16px 10px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:100;gap:10px;box-shadow:0 1px 8px var(--shadow);}
 .header-nav{display:grid;grid-template-columns:44px 1fr 88px;align-items:center;gap:8px;width:100%;max-width:1100px;margin:0 auto;}
 .logo{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:3px;color:var(--text);display:flex;align-items:baseline;gap:4px;white-space:nowrap;}
-.logo span{font-size:26px;background:linear-gradient(90deg,var(--green),var(--accent));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.logo span{font-size:26px;color:var(--accent);}
 .brand-row{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;max-width:1100px;margin:0 auto;}
 .month-nav{display:flex;align-items:center;justify-content:center;gap:12px;width:100%;}
 .month-label{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--text);min-width:160px;text-align:center;}
@@ -97,26 +103,24 @@ header{display:flex;flex-direction:column;align-items:center;padding:12px 16px 1
 .streak-block{display:flex;align-items:center;gap:10px;padding:0;flex-shrink:0;}
 .streak-fire{font-size:18px;line-height:1;}
 .streak-num{font-family:'Bebas Neue',sans-serif;font-size:26px;letter-spacing:1px;color:var(--yellow);line-height:1;}
-.streak-label{font-size:10px;color:#a3a3ba;font-family:'DM Mono',monospace;letter-spacing:.5px;line-height:1.4;}
-.streak-sub{font-size:10px;color:#b2b2c9;}
+.streak-label{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:.5px;line-height:1.4;}
+.streak-sub{font-size:10px;color:var(--muted);}
 .dash-side-stats{margin-left:auto;display:flex;flex-direction:column;gap:6px;min-width:122px;}
-.dash-stat-row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:'DM Mono',monospace;font-size:10px;color:#b2b2c9;}
+.dash-stat-row{display:flex;align-items:center;justify-content:space-between;gap:8px;font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);}
 .dash-stat-left{display:flex;align-items:center;gap:6px;}
 .dash-stat-val{font-family:'Bebas Neue',sans-serif;font-size:18px;line-height:1;letter-spacing:.5px;}
 .dash-stat-row.good .dash-stat-left{color:var(--green);}
 .dash-stat-row.good .dash-stat-val{color:var(--green);}
 .dash-stat-row.bad .dash-stat-left{color:var(--red);}
 .dash-stat-row.bad .dash-stat-val{color:var(--red);}
-.dash-stat-row.empty .dash-stat-left{color:#fff;}
-.dash-stat-row.empty .dash-stat-val{color:#fff;}
+.dash-stat-row.empty .dash-stat-left{color:var(--text);}
+.dash-stat-row.empty .dash-stat-val{color:var(--text);}
 .week-heat{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
 .heat-day{height:26px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);}
 .heat-day.good{background:var(--green-bg);border-color:var(--green-border);}
 .heat-day.bad{background:var(--red-bg);border-color:var(--red-border);}
 .heat-day.today{box-shadow:0 0 0 1px var(--accent) inset;border-color:var(--accent);}
 
-/* LEGEND */
-.cal-legend{display:flex;align-items:center;justify-content:flex-start;gap:18px;padding:0 2px 10px;font-family:'DM Mono',monospace;font-size:11px;color:#b2b2c9;}
 .legend-item{display:flex;align-items:center;gap:7px;}
 .legend-dot{width:8px;height:8px;border-radius:50%;}
 .legend-dot.good{background:var(--green);}
@@ -132,18 +136,18 @@ header{display:flex;flex-direction:column;align-items:center;padding:12px 16px 1
 .stat-sep{width:1px;background:var(--border);margin:6px 0;align-self:stretch;flex-shrink:0;}
 
 /* CALENDAR */
-.cal-wrap{flex:1;display:flex;flex-direction:column;min-height:0;padding:10px 24px 28px;max-width:1100px;width:100%;margin:0 auto;}
+.cal-wrap{display:flex;flex-direction:column;min-height:0;padding:10px 24px 12px;max-width:1100px;width:100%;margin:0 auto;}
 .day-labels{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:5px;}
 .day-label{text-align:center;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted2);padding:5px 0;text-transform:uppercase;}
 .calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;}
 .day-tile{border-radius:10px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;display:flex;flex-direction:column;padding:8px 8px 6px;position:relative;transition:border-color .15s,transform .1s,box-shadow .15s;overflow:hidden;aspect-ratio:1/1;min-height:0;}
 .day-tile:hover{border-color:var(--border2);transform:translateY(-1px);box-shadow:0 4px 16px var(--shadow);}
 .day-tile:active{transform:scale(.97);}
-.day-tile.empty-slot{background:#ffffff08;border-color:#ffffff14;cursor:default;pointer-events:none;}
-.day-tile.today{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset,0 0 20px rgba(123,108,248,.35);}
-.day-tile.good-day{background:var(--green-bg);border-color:var(--green-border);}
+.day-tile.empty-slot{background:var(--surface3);border-color:var(--border);cursor:default;pointer-events:none;opacity:.45;}
+.day-tile.today{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset,0 0 20px var(--accent-glow);}
+.day-tile.good-day{background:linear-gradient(rgba(0,230,118,.16),rgba(0,230,118,.16)),var(--surface2);border-color:var(--green-border);}
 .day-tile.good-day:hover{border-color:var(--green-dim);}
-.day-tile.bad-day{background:var(--red-bg);border-color:var(--red-border);}
+.day-tile.bad-day{background:linear-gradient(rgba(255,82,82,.16),rgba(255,82,82,.16)),var(--surface2);border-color:var(--red-border);}
 .day-tile.bad-day:hover{border-color:var(--red-dim);}
 .day-tile.future-day{background:var(--future);opacity:.6;}
 .day-num{font-family:'DM Mono',monospace;font-size:12px;font-weight:500;color:var(--muted);line-height:1;margin-bottom:5px;padding-top:1px;}
@@ -157,6 +161,64 @@ header{display:flex;flex-direction:column;align-items:center;padding:12px 16px 1
 .status-dot{position:absolute;top:6px;right:7px;width:5px;height:5px;border-radius:50%;}
 .status-dot.good{background:var(--green);}.status-dot.bad{background:var(--red);}
 .note-indicator{position:absolute;bottom:4px;right:6px;font-size:7px;opacity:.5;}
+
+/* UTILITY DRAWER */
+.utility-wrap{flex:1;min-height:220px;max-width:1100px;width:100%;margin:0 auto 20px;padding:0 24px;display:flex;align-items:flex-end;}
+.utility-drawer{width:100%;height:100%;min-height:220px;border:1px solid var(--utility-border);border-radius:14px;background:var(--utility-bg);display:flex;flex-direction:column;overflow:hidden;}
+.utility-track{flex:1;display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scroll-behavior:auto;-ms-overflow-style:none;scrollbar-width:none;}
+.utility-track::-webkit-scrollbar{display:none;}
+.utility-slide{flex:0 0 100%;padding:16px 18px 12px;scroll-snap-align:start;scroll-snap-stop:always;opacity:.5;transform:scale(.985);transition:opacity .24s ease,transform .24s ease;display:flex;flex-direction:column;gap:12px;}
+.utility-slide.active{opacity:1;transform:scale(1);}
+.utility-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:2px;color:var(--text);}
+.utility-sub{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);letter-spacing:.5px;}
+
+.pomo-main{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;}
+.pomo-ring{width:168px;height:168px;border-radius:50%;background:conic-gradient(var(--pomo-fill) 0deg,var(--pomo-track) 0deg);display:grid;place-items:center;box-shadow:inset 0 0 0 1px var(--pomo-core-border);cursor:pointer;position:relative;border:none;padding:0;appearance:none;}
+.pomo-ring::before{content:'';width:130px;height:130px;border-radius:50%;background:var(--pomo-core);border:1px solid var(--pomo-core-border);display:block;}
+.pomo-time{position:absolute;font-family:'Bebas Neue',sans-serif;font-size:56px;letter-spacing:2px;color:var(--pomo-text);line-height:1;}
+.pomo-time.running{animation:pomoPulse 2.2s ease-in-out infinite;}
+@keyframes pomoPulse{0%,100%{opacity:.75;}50%{opacity:1;text-shadow:0 0 12px var(--pomo-glow);}}
+.pomo-actions{display:flex;gap:8px;justify-content:center;}
+.pomo-set{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;overflow:hidden;max-height:0;opacity:0;pointer-events:none;transition:max-height .2s ease,opacity .2s ease;}
+.pomo-set.open{max-height:72px;opacity:1;pointer-events:auto;}
+.pomo-num{width:76px;text-align:center;}
+.pomo-suffix{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);margin-right:4px;}
+.utility-btn{background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:8px 12px;cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.6px;}
+.utility-btn.primary{background:var(--accent-bg);border-color:var(--accent);color:var(--accent);} 
+.utility-input{background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:8px 10px;font-family:'DM Mono',monospace;font-size:11px;outline:none;}
+.utility-input:focus{border-color:var(--accent);}
+
+.goal-days{font-family:'Bebas Neue',sans-serif;font-size:72px;line-height:1;color:var(--accent);letter-spacing:2px;}
+.goal-row{display:flex;align-items:flex-end;justify-content:space-between;gap:10px;}
+.goal-main{display:flex;align-items:flex-end;gap:12px;min-width:0;}
+.goal-name-inline{font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:1px;color:var(--accent);background:transparent;border:none;outline:none;min-width:0;width:min(100%,340px);}
+.goal-name-inline::placeholder{color:var(--accent);opacity:.55;}
+.goal-date-icon{background:transparent;border:none;color:var(--accent);font-size:24px;line-height:1;cursor:pointer;padding:2px 4px;}
+.goal-date-native{position:absolute;opacity:0;pointer-events:none;width:0;height:0;}
+.goal-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:8px 10px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);}
+.goal-meta-tag{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);letter-spacing:.6px;}
+.goal-meta-date{font-family:'DM Mono',monospace;font-size:11px;color:var(--text);}
+.goal-note{display:flex;flex-direction:column;gap:6px;padding:10px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);}
+.goal-note-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);letter-spacing:.6px;text-transform:uppercase;}
+.goal-note-input{width:100%;min-height:54px;background:transparent;border:none;outline:none;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;resize:vertical;}
+
+[data-theme="dark"] input[type="time"],
+[data-theme="dark"] input[type="date"]{color-scheme:dark;}
+[data-theme="light"] input[type="time"],
+[data-theme="light"] input[type="date"]{color-scheme:light;}
+
+.diary-field{display:flex;flex-direction:column;gap:6px;}
+.diary-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.5px;display:flex;align-items:center;gap:6px;}
+.diary-input{width:100%;min-height:64px;background:#0f141e;border:1px solid #2a3347;border-radius:10px;padding:10px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;resize:none;outline:none;}
+.diary-input:focus{border-color:#06B6D4;}
+.diary-status{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);}
+
+@media (max-width:700px){
+  .pomo-ring{width:144px;height:144px;}
+  .pomo-ring::before{width:112px;height:112px;}
+  .pomo-time{font-size:48px;}
+  .goal-name-inline{font-size:22px;width:min(100%,200px);}
+}
 
 /* MODAL */
 .modal-overlay{position:fixed;inset:0;background:var(--overlay);display:flex;align-items:flex-end;justify-content:center;z-index:1000;opacity:0;pointer-events:none;transition:opacity .2s;padding:0;}
@@ -184,6 +246,7 @@ header{display:flex;flex-direction:column;align-items:center;padding:12px 16px 1
 .task-item:hover{border-color:var(--border2);}
 .task-check{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--border2);background:transparent;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .15s;color:transparent;font-size:11px;}
 .task-check.checked{background:var(--green);border-color:var(--green);color:#fff;}
+.task-check.locked{cursor:not-allowed;border-style:dashed;color:var(--muted);}
 .task-text{flex:1;font-size:13px;color:var(--text);line-height:1.4;outline:none;background:transparent;border:none;font-family:'DM Sans',sans-serif;min-width:0;}
 .task-text.done-text{text-decoration:line-through;color:var(--muted2);}
 .task-time{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);flex-shrink:0;cursor:pointer;padding:2px 5px;border-radius:4px;border:1px solid transparent;transition:all .15s;}
@@ -229,6 +292,8 @@ header{display:flex;flex-direction:column;align-items:center;padding:12px 16px 1
 .url-save-btn:hover{background:var(--accent);color:#fff;}
 .settings-account-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
 .settings-email{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:170px;}
+.reminder-test-btn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;transition:all .15s;}
+.reminder-test-btn:hover{background:var(--accent-bg);border-color:var(--accent);color:var(--accent);}
 
 /* CARRY FORWARD */
 .cf-overlay{position:fixed;inset:0;background:var(--overlay);display:flex;align-items:flex-end;justify-content:center;z-index:3000;opacity:0;pointer-events:none;transition:opacity .2s;}
@@ -253,6 +318,77 @@ header{display:flex;flex-direction:column;align-items:center;padding:12px 16px 1
 .fab:active{transform:scale(.95);}
 .fab:hover{opacity:.9;}
 
+/* STREAK MILESTONES */
+.streak-fire{transition:filter .25s ease,text-shadow .25s ease;}
+.logo{transition:text-shadow .3s ease;}
+.milestone-7 .streak-fire{
+  filter:hue-rotate(185deg) saturate(1.8) brightness(1.1);
+  text-shadow:0 0 10px rgba(96,165,250,.45);
+}
+.milestone-14 .logo{
+  text-shadow:0 0 10px rgba(187,134,252,.35),0 0 20px rgba(187,134,252,.2);
+}
+@keyframes todayShimmer{
+  0%{background-position:0% 50%;}
+  100%{background-position:200% 50%;}
+}
+.milestone-30 .day-tile.today{
+  border-color:transparent;
+  box-shadow:0 0 0 2px transparent inset,0 0 22px rgba(187,134,252,.4);
+  background-image:
+    linear-gradient(var(--surface2),var(--surface2)),
+    linear-gradient(120deg,#8b5cf6,#bb86fc,#60a5fa,#8b5cf6);
+  background-origin:border-box;
+  background-clip:padding-box,border-box;
+  background-size:100% 100%,220% 220%;
+  animation:todayShimmer 2.4s linear infinite;
+}
+[data-theme="dark"].milestone-30 .day-tile.today{
+  background-image:
+    linear-gradient(#1E1E1E,#1E1E1E),
+    linear-gradient(120deg,#8b5cf6,#bb86fc,#60a5fa,#8b5cf6);
+}
+
+[data-theme="dark"] .dashboard-card{
+  border-color:#333333;
+  box-shadow:none;
+}
+[data-theme="dark"] .day-tile{
+  border-color:#333333;
+  background:#1E1E1E;
+}
+[data-theme="dark"] .day-tile.good-day{
+  background:linear-gradient(rgba(0,230,118,.2),rgba(0,230,118,.2)),#1E1E1E;
+  border-color:var(--green-border);
+}
+[data-theme="dark"] .day-tile.bad-day{
+  background:linear-gradient(rgba(255,82,82,.2),rgba(255,82,82,.2)),#1E1E1E;
+  border-color:var(--red-border);
+}
+[data-theme="dark"] .day-tile.empty-slot{
+  background:transparent;
+  border-color:#333333;
+  opacity:1;
+}
+[data-theme="dark"] .day-tile.today{
+  border-color:#333333;
+  box-shadow:0 0 10px rgba(187,134,252,0.3);
+}
+[data-theme="dark"] .streak-num{
+  color:#FFFFFF;
+}
+[data-theme="dark"] .streak-label,
+[data-theme="dark"] .streak-sub{
+  color:#888888;
+}
+[data-theme="dark"] .dash-stat-row.empty .dash-stat-left,
+[data-theme="dark"] .dash-stat-row.empty .dash-stat-val{
+  color:#fff;
+}
+[data-theme="dark"] .legend-dot.empty{
+  background:#888888;
+}
+
 #confetti-canvas{position:fixed;inset:0;pointer-events:none;z-index:9999;}
 
 @media(max-width:480px){
@@ -266,7 +402,7 @@ header{display:flex;flex-direction:column;align-items:center;padding:12px 16px 1
   .week-heat{gap:5px;}
   .heat-day{height:22px;}
   .cal-wrap{padding:10px 10px 10px;}
-  .cal-legend{gap:12px;padding:0 0 8px;font-size:10px;}
+  .utility-wrap{padding:0 10px;margin:0 auto 12px;min-height:180px;}
   .calendar{gap:5px;}
   .day-tile{padding:6px 6px 4px;}
   .day-num{font-size:10px;}
@@ -350,20 +486,71 @@ header{display:flex;flex-direction:column;align-items:center;padding:12px 16px 1
         </div>
       </div>
     </div>
-    <div class="week-heat" id="weekView"></div>
   </div>
 </div>
 <div class="cal-wrap">
-  <div class="cal-legend">
-    <div class="legend-item"><span class="legend-dot good"></span>good</div>
-    <div class="legend-item"><span class="legend-dot bad"></span>wasted</div>
-    <div class="legend-item"><span class="legend-dot empty"></span>empty</div>
-  </div>
   <div class="day-labels">
     <div class="day-label">Sun</div><div class="day-label">Mon</div><div class="day-label">Tue</div>
     <div class="day-label">Wed</div><div class="day-label">Thu</div><div class="day-label">Fri</div><div class="day-label">Sat</div>
   </div>
   <div class="calendar" id="calendar"></div>
+</div>
+<div class="utility-wrap">
+  <div class="utility-drawer">
+    <div class="utility-track" id="utilityTrack">
+      <section class="utility-slide active" id="slidePomodoro">
+        <div class="utility-title">Focus Engine</div>
+        <div class="pomo-main">
+          <button class="pomo-ring" id="pomoRing" aria-label="Pomodoro clock"><span class="pomo-time" id="pomoTime">25:00</span></button>
+          <div class="utility-sub" id="pomoHint">Tap clock to set duration</div>
+          <div class="pomo-set" id="pomoSetPanel">
+            <input class="utility-input pomo-num" id="pomoHoursInput" type="number" min="0" max="23" step="1" value="0" inputmode="numeric">
+            <span class="pomo-suffix">hr</span>
+            <input class="utility-input pomo-num" id="pomoMinutesInput" type="number" min="0" max="59" step="1" value="25" inputmode="numeric">
+            <span class="pomo-suffix">min</span>
+            <button class="utility-btn" id="pomoSetBtn">Set</button>
+          </div>
+          <div class="pomo-actions">
+            <button class="utility-btn primary" id="pomoToggleBtn">Start</button>
+            <button class="utility-btn" id="pomoResetBtn">Reset</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="utility-slide" id="slideGoal">
+        <div class="utility-title">Goal Horizon</div>
+        <div class="goal-row">
+          <div class="goal-main">
+            <div class="goal-days" id="goalDays">0</div>
+            <input class="goal-name-inline" id="goalNameInput" type="text" maxlength="48" value="Days until GATE 2027" aria-label="Goal title">
+          </div>
+          <button class="goal-date-icon" id="goalDateBtn" type="button" aria-label="Set goal date" title="Set goal date">📅</button>
+          <input class="goal-date-native" id="goalDateInput" type="date" tabindex="-1" aria-hidden="true">
+        </div>
+        <div class="goal-meta">
+          <span class="goal-meta-tag">Target date</span>
+          <span class="goal-meta-date" id="goalTargetText">-</span>
+        </div>
+        <div class="goal-note">
+          <div class="goal-note-label">Goal note</div>
+          <textarea class="goal-note-input" id="goalNoteInput" placeholder="Add one small reminder for this goal..."></textarea>
+        </div>
+      </section>
+
+      <section class="utility-slide" id="slideDiary">
+        <div class="utility-title" id="dailyEntryTitle">Daily Entry of Today</div>
+        <div class="diary-field">
+          <div class="diary-label">⭐ Something happy to remember from today</div>
+          <textarea class="diary-input" id="diaryWin" placeholder="Write your biggest win..."></textarea>
+        </div>
+        <div class="diary-field">
+          <div class="diary-label">🔄 What would you change?</div>
+          <textarea class="diary-input" id="diaryChange" placeholder="Write what you would improve..."></textarea>
+        </div>
+        <div class="diary-status" id="diaryStatus"></div>
+      </section>
+    </div>
+  </div>
 </div>
 <button class="fab" id="quickAddBtn" aria-label="Log today's score">+</button>
 </div>
@@ -393,6 +580,8 @@ header{display:flex;flex-direction:column;align-items:center;padding:12px 16px 1
       <span class="settings-email" id="settingsUserEmail">Not signed in</span>
       <button class="signout-btn" id="signOutBtn">Sign out</button>
     </div>
+    <button class="reminder-test-btn" id="testReminderBtn">Test Alert Now</button>
+    <div class="settings-note" id="reminderDiag">Reminder status: checking...</div>
   </div>
 </div>
 
@@ -422,6 +611,7 @@ header{display:flex;flex-direction:column;align-items:center;padding:12px 16px 1
         <input class="add-time-input" id="newTaskTime" type="time">
         <button class="add-btn" id="addTaskBtn">+</button>
       </div>
+      <input id="editTaskTimePicker" type="time" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0;border:0;padding:0;">
       <div class="note-section">
         <div class="note-label">📝 Daily Note</div>
         <textarea class="note-input" id="noteInput" placeholder="How did today go?" maxlength="500"></textarea>
@@ -500,9 +690,27 @@ const isNative  = typeof window.Capacitor !== 'undefined';
 // ── STATE ──────────────────────────────────────────────────────
 const THEME_KEY = 'dayscore_theme';
 const CF_KEY    = 'dayscore_cf_date';
-let state = { tasks:{}, notes:{}, threshold:50 };
+let state = { tasks:{}, notes:{}, threshold:50, utility:{goalTarget:'2027-02-01',goalName:'Days until GATE 2027',goalNote:'',pomoMinutes:25}, diary:{} };
 let currentUser = null;
 let saveTimer   = null;
+let reminderSyncTimer = null;
+let reminderListenerBound = false;
+let reminderChannelReady = false;
+let editingTimeTaskIndex = null;
+let pomoTimer = null;
+let diarySaveTimer = null;
+let goalNoteSaveTimer = null;
+
+const REMINDER_TRACKED_IDS_KEY = 'dayscore_native_reminder_ids';
+const REMINDER_TRACKED_PAYLOADS_KEY = 'dayscore_native_reminder_payloads';
+const REMINDER_CHANNEL_ID = 'dayscore-reminders-v2';
+const LEGACY_REMINDER_CHANNEL_ID = 'dayscore-reminders';
+const REMINDER_ACTION_TYPE_ID = 'dayscore-task-actions';
+const REMINDER_SNOOZE_MINUTES = 15;
+const POMO_END_KEY = 'dayscore_pomo_end';
+const POMO_REMAINING_KEY = 'dayscore_pomo_remaining';
+const POMO_RUNNING_KEY = 'dayscore_pomo_running';
+const POMO_DURATION_KEY = 'dayscore_pomo_duration';
 
 function getThreshold(){ return (state.threshold||50)/100; }
 
@@ -513,6 +721,7 @@ function applyTheme(t){
   document.getElementById('ttDark').classList.toggle('active',t==='dark');
   document.getElementById('ttLight').classList.toggle('active',t==='light');
   localStorage.setItem(THEME_KEY,t);
+  if(typeof renderPomodoro==='function') renderPomodoro();
 }
 document.getElementById('themeToggle').addEventListener('click',()=>{
   applyTheme(document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark');
@@ -605,7 +814,10 @@ async function emailRegister(){
 }
 
 document.getElementById('signOutBtn').addEventListener('click', async ()=>{
-  if(confirm('Sign out of DayScore?')){ await signOut(auth); }
+  if(confirm('Sign out of DayScore?')){
+    await clearNativeReminderTracking();
+    await signOut(auth);
+  }
 });
 
 // ── AUTH STATE ─────────────────────────────────────────────────
@@ -625,6 +837,9 @@ onAuthStateChanged(auth, async (user)=>{
     renderCalendar();
     checkCarryForward();
     requestNotifPermission();
+    queueReminderSync();
+    refreshReminderDiagnostics();
+    renderUtilityDrawer();
 
     loading.classList.add('hidden');
     login.classList.add('hidden');
@@ -632,6 +847,8 @@ onAuthStateChanged(auth, async (user)=>{
 
   } else {
     currentUser = null;
+    await clearNativeReminderTracking();
+    setReminderDiag('Reminder status: sign in required');
     document.getElementById('settingsUserEmail').textContent = 'Not signed in';
     loading.classList.add('hidden');
     login.classList.remove('hidden');
@@ -652,9 +869,17 @@ async function loadFromFirebase(){
   try {
     const snap = await getDoc(doc(db,'users',currentUser.uid));
     if(snap.exists()){
-      state = Object.assign({tasks:{},notes:{},threshold:50}, snap.data());
+      state = Object.assign({tasks:{},notes:{},threshold:50,utility:{goalTarget:'2027-02-01',goalName:'Days until GATE 2027',goalNote:'',pomoMinutes:25},diary:{}}, snap.data());
+      if(!state.utility||typeof state.utility!=='object') state.utility={goalTarget:'2027-02-01',goalName:'Days until GATE 2027',goalNote:'',pomoMinutes:25};
+      if(!state.utility.goalTarget) state.utility.goalTarget='2027-02-01';
+      if(!state.utility.goalName) state.utility.goalName='Days until GATE 2027';
+      if(typeof state.utility.goalNote!=='string') state.utility.goalNote='';
+      if(!state.utility.pomoMinutes||state.utility.pomoMinutes<1) state.utility.pomoMinutes=25;
+      if(!state.diary||typeof state.diary!=='object') state.diary={};
+      queueReminderSync();
       setSyncStatus('synced','Synced · '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
     } else {
+      queueReminderSync();
       setSyncStatus('synced','Ready — start adding tasks!');
     }
   } catch(e){
@@ -706,13 +931,22 @@ function calcStreak(){
   }
   return streak;
 }
+function applyStreakMilestones(streak){
+  document.body.classList.remove('milestone-7','milestone-14','milestone-30');
+  if(streak>=7) document.body.classList.add('milestone-7');
+  if(streak>=14) document.body.classList.add('milestone-14');
+  if(streak>=30) document.body.classList.add('milestone-30');
+}
 function renderStreak(){
   const s=calcStreak();
   document.getElementById('streakNum').textContent=s;
   document.getElementById('streakSub').textContent=s===0?'start today!':s===1?'keep it up!':s<7?`${s} days strong!`:`${s} days 🏆`;
+  applyStreakMilestones(s);
 }
 
 function renderWeekView(){
+  const host=document.getElementById('weekView');
+  if(!host) return;
   const t=today(), dow=new Date(t.y,t.m,t.d).getDay();
   let html='';
   for(let i=0;i<7;i++){
@@ -726,10 +960,11 @@ function renderWeekView(){
     if(isTod) cls+=' today';
     html+=`<div class="${cls}" title="${SHORT_DAYS[i]} ${day}" onclick="openModal('${key}')"></div>`;
   }
-  document.getElementById('weekView').innerHTML=html;
+  host.innerHTML=html;
 }
 
 function renderCalendar(){
+  normalizeFutureTaskCompletion();
   const cal=document.getElementById('calendar');
   const firstDay=new Date(viewYear,viewMonth,1).getDay();
   const dim=new Date(viewYear,viewMonth+1,0).getDate();
@@ -755,7 +990,7 @@ function renderCalendar(){
   const trailingCells = (7 - (usedCells % 7)) % 7;
   for(let i=0;i<trailingCells;i++) html+=`<div class="day-tile empty-slot"></div>`;
   cal.innerHTML=html;
-  renderStats(); renderStreak(); renderWeekView();
+  renderStats(); renderStreak(); renderUtilityDrawer();
 }
 
 function renderStats(){
@@ -772,6 +1007,309 @@ function renderStats(){
   document.getElementById('goodCount').textContent=good;
   document.getElementById('badCount').textContent=bad;
   document.getElementById('emptyCount').textContent=empty;
+}
+function ensureUtilityState(){
+  if(!state.utility||typeof state.utility!=='object') state.utility={goalTarget:'2027-02-01',goalName:'Days until GATE 2027',goalNote:'',pomoMinutes:25};
+  if(!state.utility.goalTarget) state.utility.goalTarget='2027-02-01';
+  if(!state.utility.goalName) state.utility.goalName='Days until GATE 2027';
+  if(typeof state.utility.goalNote!=='string') state.utility.goalNote='';
+  if(!state.utility.pomoMinutes||state.utility.pomoMinutes<1) state.utility.pomoMinutes=25;
+  if(!state.diary||typeof state.diary!=='object') state.diary={};
+}
+function getPomodoroDurationMs(){
+  ensureUtilityState();
+  const fromLocal=Number(localStorage.getItem(POMO_DURATION_KEY)||state.utility.pomoMinutes||25);
+  const mins=Math.max(1,Math.min(1439,fromLocal));
+  return mins*60*1000;
+}
+function formatDurationLabel(mins){
+  const m=Math.max(1,Math.floor(mins||25));
+  if(m<60) return `${m} min`;
+  const h=Math.floor(m/60), rem=m%60;
+  return rem?`${h}h ${rem}m`:`${h}h`;
+}
+function syncPomodoroInputs(){
+  const hIn=document.getElementById('pomoHoursInput');
+  const mIn=document.getElementById('pomoMinutesInput');
+  if(!hIn||!mIn) return;
+  const mins=Math.max(1,Math.floor(state.utility?.pomoMinutes||25));
+  hIn.value=String(Math.floor(mins/60));
+  mIn.value=String(mins%60);
+}
+function formatMs(ms){
+  const s=Math.max(0,Math.floor(ms/1000));
+  const m=Math.floor(s/60), sec=s%60;
+  return `${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+}
+function getPomodoroState(){
+  const running=localStorage.getItem(POMO_RUNNING_KEY)==='1';
+  const end=Number(localStorage.getItem(POMO_END_KEY)||0);
+  const duration=getPomodoroDurationMs();
+  const storedRemain=Number(localStorage.getItem(POMO_REMAINING_KEY)||duration);
+  let remaining=storedRemain;
+  if(running&&end>0) remaining=Math.max(0,end-Date.now());
+  return {running,end,remaining};
+}
+function setPomodoroState(running,end,remaining){
+  localStorage.setItem(POMO_RUNNING_KEY,running?'1':'0');
+  localStorage.setItem(POMO_END_KEY,String(end||0));
+  localStorage.setItem(POMO_REMAINING_KEY,String(Math.max(0,remaining||0)));
+}
+function renderPomodoro(){
+  const timeEl=document.getElementById('pomoTime');
+  const ring=document.getElementById('pomoRing');
+  const hint=document.getElementById('pomoHint');
+  const toggle=document.getElementById('pomoToggleBtn');
+  const setPanel=document.getElementById('pomoSetPanel');
+  if(!timeEl||!ring) return;
+  const s=getPomodoroState();
+  const total=getPomodoroDurationMs();
+  const pct=Math.max(0,Math.min(1,s.remaining/total));
+  const deg=Math.round((1-pct)*360);
+  const styles=getComputedStyle(document.documentElement);
+  const fill=styles.getPropertyValue('--pomo-fill').trim()||'#8c6bff';
+  const track=styles.getPropertyValue('--pomo-track').trim()||'#2a3448';
+  ring.style.background=`conic-gradient(${fill} ${deg}deg,${track} ${deg}deg)`;
+  timeEl.textContent=formatMs(s.remaining);
+  timeEl.classList.toggle('running',s.running);
+  if(toggle){
+    toggle.textContent=s.running?'Pause':'Start';
+    toggle.classList.toggle('primary',!s.running);
+  }
+  if(hint){
+    if(s.running) hint.textContent=`Running ${formatDurationLabel(total/60000)}`;
+    else hint.textContent=setPanel?.classList.contains('open')?'Set hours/minutes, then tap Set':`Tap clock to set (${formatDurationLabel(total/60000)})`;
+  }
+  if(s.running&&s.remaining===0){
+    setPomodoroState(false,0,total);
+    if(typeof navigator!=='undefined'&&navigator.vibrate) navigator.vibrate([20,40,20]);
+  }
+}
+function startPomodoroTicker(){
+  if(pomoTimer) clearInterval(pomoTimer);
+  pomoTimer=setInterval(renderPomodoro,1000);
+  renderPomodoro();
+}
+function startPomodoro(){
+  const s=getPomodoroState();
+  if(s.running) return;
+  const total=getPomodoroDurationMs();
+  const end=Date.now()+Math.max(1000,s.remaining||total);
+  setPomodoroState(true,end,s.remaining||total);
+  renderPomodoro();
+}
+function pausePomodoro(){
+  const s=getPomodoroState();
+  if(!s.running) return;
+  setPomodoroState(false,0,s.remaining);
+  renderPomodoro();
+}
+function togglePomodoro(){
+  const s=getPomodoroState();
+  if(s.running) pausePomodoro();
+  else startPomodoro();
+}
+function resetPomodoro(){
+  setPomodoroState(false,0,getPomodoroDurationMs());
+  renderPomodoro();
+}
+function togglePomodoroSetPanel(){
+  const panel=document.getElementById('pomoSetPanel');
+  if(!panel||getPomodoroState().running) return;
+  panel.classList.toggle('open');
+  if(panel.classList.contains('open')) document.getElementById('pomoHoursInput')?.focus();
+  renderPomodoro();
+}
+function closePomodoroSetPanel(){
+  const panel=document.getElementById('pomoSetPanel');
+  if(!panel||!panel.classList.contains('open')) return;
+  panel.classList.remove('open');
+  renderPomodoro();
+}
+function setPomodoroDurationFromInputs(){
+  ensureUtilityState();
+  if(getPomodoroState().running) return;
+  const hIn=document.getElementById('pomoHoursInput');
+  const mIn=document.getElementById('pomoMinutesInput');
+  if(!hIn||!mIn) return;
+  const hours=Math.max(0,Math.min(23,Number(hIn.value||0)));
+  const mins=Math.max(0,Math.min(59,Number(mIn.value||0)));
+  const total=Math.max(1,Math.min(1439,Math.round(hours*60+mins)));
+  state.utility.pomoMinutes=total;
+  hIn.value=String(Math.floor(total/60));
+  mIn.value=String(total%60);
+  localStorage.setItem(POMO_DURATION_KEY,String(state.utility.pomoMinutes));
+  setPomodoroState(false,0,getPomodoroDurationMs());
+  document.getElementById('pomoSetPanel')?.classList.remove('open');
+  persist();
+  renderPomodoro();
+}
+function renderGoal(){
+  ensureUtilityState();
+  const input=document.getElementById('goalDateInput');
+  const out=document.getElementById('goalDays');
+  const nameInput=document.getElementById('goalNameInput');
+  const noteInput=document.getElementById('goalNoteInput');
+  const targetText=document.getElementById('goalTargetText');
+  if(!input||!out) return;
+  input.value=state.utility.goalTarget;
+  if(nameInput&&document.activeElement!==nameInput) nameInput.value=state.utility.goalName;
+  if(noteInput&&document.activeElement!==noteInput) noteInput.value=state.utility.goalNote||'';
+  const target=new Date(state.utility.goalTarget+'T00:00:00');
+  const now=new Date();
+  const today0=new Date(now.getFullYear(),now.getMonth(),now.getDate());
+  const days=Math.ceil((target-today0)/86400000);
+  out.textContent=String(days);
+  if(targetText){
+    const opts={day:'2-digit',month:'short',year:'numeric'};
+    targetText.textContent=target.toLocaleDateString(undefined,opts);
+  }
+}
+function diaryKeyForToday(){
+  const t=today();
+  return toKey(t.y,t.m,t.d);
+}
+function renderDiary(){
+  ensureUtilityState();
+  const key=diaryKeyForToday();
+  const item=state.diary[key]||{win:'',change:''};
+  const title=document.getElementById('dailyEntryTitle');
+  const win=document.getElementById('diaryWin');
+  const chg=document.getElementById('diaryChange');
+  if(title){
+    const n=new Date();
+    const ds=n.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'});
+    title.textContent=`Daily Entry of ${ds}`;
+  }
+  if(win&&document.activeElement!==win) win.value=item.win||'';
+  if(chg&&document.activeElement!==chg) chg.value=item.change||'';
+}
+function scheduleDiarySave(){
+  clearTimeout(diarySaveTimer);
+  const status=document.getElementById('diaryStatus');
+  if(status) status.textContent='Saving...';
+  diarySaveTimer=setTimeout(()=>{
+    ensureUtilityState();
+    const key=diaryKeyForToday();
+    state.diary[key]={
+      win:(document.getElementById('diaryWin')?.value||'').trim(),
+      change:(document.getElementById('diaryChange')?.value||'').trim(),
+      updatedAt:Date.now()
+    };
+    persist();
+    if(status) status.textContent='Saved';
+  },2000);
+}
+function setupUtilityDrawer(){
+  const track=document.getElementById('utilityTrack');
+  if(!track||track.dataset.bound==='1') return;
+  track.dataset.bound='1';
+  const slides=[...document.querySelectorAll('.utility-slide')];
+  const maxIdx=Math.max(0,slides.length-1);
+  let isDragging=false;
+  let activeFrame=0;
+  let dragStartX=0;
+  let dragStartLeft=0;
+  let dragStartAt=0;
+  const clamp=(n,min,max)=>Math.max(min,Math.min(max,n));
+  const lockTo=(idx,behavior='auto')=>{
+    const target=clamp(idx,0,maxIdx);
+    track.scrollTo({left:target*track.clientWidth,behavior});
+    slides.forEach((s,i)=>s.classList.toggle('active',i===target));
+  };
+  const syncActive=()=>{
+    if(activeFrame) cancelAnimationFrame(activeFrame);
+    activeFrame=requestAnimationFrame(()=>{
+      const idx=Math.round(track.scrollLeft/Math.max(1,track.clientWidth));
+      slides.forEach((s,i)=>s.classList.toggle('active',i===idx));
+    });
+  };
+  track.addEventListener('scroll',syncActive);
+  track.addEventListener('pointerdown',e=>{
+    isDragging=true;
+    // Let finger movement flow first; snap only when gesture ends.
+    track.style.scrollSnapType='none';
+    if(track.setPointerCapture){
+      try{ track.setPointerCapture(e.pointerId); }catch(_){ }
+    }
+    dragStartX=e.clientX;
+    dragStartLeft=track.scrollLeft;
+    dragStartAt=Date.now();
+  });
+  track.addEventListener('pointerup',e=>{
+    isDragging=false;
+    track.style.scrollSnapType='x mandatory';
+    const width=Math.max(1,track.clientWidth);
+    const startIdx=Math.round(dragStartLeft/width);
+    const moved=e.clientX-dragStartX;
+    const elapsed=Math.max(1,Date.now()-dragStartAt);
+    const velocity=Math.abs(moved/elapsed);
+    const movedFar=Math.abs(moved)>width*0.18;
+    const movedFast=velocity>0.55;
+    let target=Math.round(track.scrollLeft/width);
+    if(movedFar||movedFast) target=startIdx+(moved<0?1:-1);
+    lockTo(target,'auto');
+  });
+  track.addEventListener('pointercancel',()=>{
+    if(isDragging){
+      track.style.scrollSnapType='x mandatory';
+      const idx=Math.round(track.scrollLeft/Math.max(1,track.clientWidth));
+      lockTo(idx,'auto');
+    }
+    isDragging=false;
+  });
+
+  document.getElementById('pomoToggleBtn')?.addEventListener('click',togglePomodoro);
+  document.getElementById('pomoResetBtn')?.addEventListener('click',resetPomodoro);
+  document.getElementById('pomoRing')?.addEventListener('click',togglePomodoroSetPanel);
+  document.getElementById('pomoSetBtn')?.addEventListener('click',setPomodoroDurationFromInputs);
+  document.getElementById('pomoHoursInput')?.addEventListener('change',setPomodoroDurationFromInputs);
+  document.getElementById('pomoMinutesInput')?.addEventListener('change',setPomodoroDurationFromInputs);
+  document.addEventListener('pointerdown',e=>{
+    const target=e.target;
+    const panel=document.getElementById('pomoSetPanel');
+    if(!panel||!panel.classList.contains('open')) return;
+    if(target instanceof Element && (target.closest('#pomoSetPanel')||target.closest('#pomoRing'))) return;
+    closePomodoroSetPanel();
+  });
+
+  document.getElementById('goalDateBtn')?.addEventListener('click',()=>{
+    const picker=document.getElementById('goalDateInput');
+    if(!picker) return;
+    if(typeof picker.showPicker==='function') picker.showPicker();
+    else picker.click();
+  });
+
+  document.getElementById('goalDateInput')?.addEventListener('change',e=>{
+    ensureUtilityState();
+    state.utility.goalTarget=e.target.value||'2027-02-01';
+    persist();
+    renderGoal();
+  });
+  document.getElementById('goalNameInput')?.addEventListener('input',e=>{
+    ensureUtilityState();
+    state.utility.goalName=(e.target.value||'Days until GATE 2027').slice(0,48);
+    persist();
+    renderGoal();
+  });
+  document.getElementById('goalNoteInput')?.addEventListener('input',e=>{
+    ensureUtilityState();
+    state.utility.goalNote=(e.target.value||'').slice(0,220);
+    clearTimeout(goalNoteSaveTimer);
+    goalNoteSaveTimer=setTimeout(()=>persist(),500);
+  });
+
+  document.getElementById('diaryWin')?.addEventListener('input',scheduleDiarySave);
+  document.getElementById('diaryChange')?.addEventListener('input',scheduleDiarySave);
+}
+function renderUtilityDrawer(){
+  setupUtilityDrawer();
+  ensureUtilityState();
+  localStorage.setItem(POMO_DURATION_KEY,String(state.utility.pomoMinutes||25));
+  syncPomodoroInputs();
+  renderPomodoro();
+  renderGoal();
+  renderDiary();
 }
 
 // ── MODAL ──────────────────────────────────────────────────────
@@ -814,10 +1352,15 @@ function renderTaskList(){
   const now=new Date(), nowMins=now.getHours()*60+now.getMinutes();
   const[ky,km,kd]=activeKey.split('-').map(Number);
   const keyIsToday=isToday(ky,km-1,kd);
+  const keyIsFuture=isFuture(ky,km-1,kd);
   list.innerHTML=tasks.map((task,i)=>{
+    const doneState=!keyIsFuture&&task.done;
+    const checkClass=`task-check ${doneState?'checked':''} ${keyIsFuture?'locked':''}`.trim();
+    const checkAction=keyIsFuture?'showFutureLockHint()':`toggleTask(${i})`;
+    const checkLabel=keyIsFuture?'LOCK':(doneState?'✓':'');
     let timeCls='task-time', timeLabel='+ time';
-    if(task.time){const[h,min]=task.time.split(':').map(Number);timeCls+=' has-time';timeLabel=task.time;if(keyIsToday&&!task.done&&h*60+min<nowMins)timeCls+=' overdue';}
-    return`<div class="task-item"><div class="task-check ${task.done?'checked':''}" onclick="toggleTask(${i})">${task.done?'✓':''}</div><div class="task-text ${task.done?'done-text':''}" contenteditable="true" onblur="editTask(${i},this.textContent.trim())" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}">${escHtml(task.text)}</div><span class="${timeCls}" onclick="editTime(${i})">${timeLabel}</span><button class="task-del" onclick="deleteTask(${i})">×</button></div>`;
+    if(task.time){const[h,min]=task.time.split(':').map(Number);timeCls+=' has-time';timeLabel=task.time;if(keyIsToday&&!doneState&&h*60+min<nowMins)timeCls+=' overdue';}
+    return`<div class="task-item"><div class="${checkClass}" onclick="${checkAction}" title="${keyIsFuture?'Locked until this day starts':'Mark task complete'}">${checkLabel}</div><div class="task-text ${doneState?'done-text':''}" contenteditable="true" onblur="editTask(${i},this.textContent.trim())" onkeydown="if(event.key==='Enter'){event.preventDefault();this.blur()}">${escHtml(task.text)}</div><span class="${timeCls}" onclick="editTime(${i})">${timeLabel}</span><button class="task-del" onclick="deleteTask(${i})">×</button></div>`;
   }).join('');
 }
 
@@ -825,29 +1368,71 @@ function escHtml(s){ return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace
 
 window.toggleTask=function(i){
   if(!activeKey||!state.tasks[activeKey]) return;
+  const [y,m,d]=activeKey.split('-').map(Number);
+  if(isFuture(y,m-1,d)){
+    showFutureLockHint();
+    return;
+  }
   state.tasks[activeKey][i].done=!state.tasks[activeKey][i].done;
+  queueReminderSync();
   persist(); renderTaskList(); renderCalendar(); openModal(activeKey);
   if(state.tasks[activeKey].every(t=>t.done)) launchConfetti();
 };
+window.showFutureLockHint=function(){
+  alert('Future tasks are locked. You can add tasks now, but you can only tick them off on that date.');
+};
+function normalizeFutureTaskCompletion(){
+  if(!state.tasks) return;
+  const t=today();
+  const todayDate=new Date(t.y,t.m,t.d);
+  let changed=false;
+  Object.keys(state.tasks).forEach(key=>{
+    const [y,m,d]=key.split('-').map(Number);
+    if(!y||!m||!d) return;
+    const keyDate=new Date(y,m-1,d);
+    if(keyDate<=todayDate) return;
+    (state.tasks[key]||[]).forEach(task=>{
+      if(task.done){
+        task.done=false;
+        changed=true;
+      }
+    });
+  });
+  if(changed){
+    queueReminderSync();
+    persist();
+  }
+}
 window.deleteTask=function(i){
   if(!activeKey||!state.tasks[activeKey]) return;
   state.tasks[activeKey].splice(i,1);
   if(!state.tasks[activeKey].length) delete state.tasks[activeKey];
+  queueReminderSync();
   persist(); renderTaskList(); renderCalendar(); openModal(activeKey);
 };
 window.editTask=function(i,text){
   if(!activeKey||!state.tasks[activeKey]) return;
   if(!text){deleteTask(i);return;}
   state.tasks[activeKey][i].text=text;
+  queueReminderSync();
   persist(); renderCalendar();
 };
 window.editTime=function(i){
   if(!activeKey||!state.tasks[activeKey]) return;
-  const cur=state.tasks[activeKey][i].time||'';
-  const val=prompt('Set due time (HH:MM) or blank to clear:',cur);
-  if(val===null) return;
-  state.tasks[activeKey][i].time=val.trim();
-  persist(); renderTaskList();
+  const picker=document.getElementById('editTaskTimePicker');
+  if(!picker){
+    const cur=state.tasks[activeKey][i].time||'';
+    const val=prompt('Set due time (HH:MM) or blank to clear:',cur);
+    if(val===null) return;
+    state.tasks[activeKey][i].time=val.trim();
+    queueReminderSync();
+    persist(); renderTaskList();
+    return;
+  }
+  editingTimeTaskIndex=i;
+  picker.value=state.tasks[activeKey][i].time||'';
+  if(typeof picker.showPicker==='function') picker.showPicker();
+  else picker.click();
 };
 
 document.getElementById('addTaskBtn').addEventListener('click',()=>{
@@ -857,6 +1442,7 @@ document.getElementById('addTaskBtn').addEventListener('click',()=>{
   if(!state.tasks[activeKey]) state.tasks[activeKey]=[];
   state.tasks[activeKey].push({id:Date.now(),text,done:false,time:time||''});
   inp.value=''; document.getElementById('newTaskTime').value='';
+  queueReminderSync();
   persist(); renderTaskList(); renderCalendar();
 });
 document.getElementById('newTaskInput').addEventListener('keydown',e=>{
@@ -866,6 +1452,7 @@ document.getElementById('newTaskInput').addEventListener('keydown',e=>{
     if(!state.tasks[activeKey]) state.tasks[activeKey]=[];
     state.tasks[activeKey].push({id:Date.now(),text,done:false,time:time||''});
     e.target.value=''; document.getElementById('newTaskTime').value='';
+    queueReminderSync();
     persist(); renderTaskList(); renderCalendar();
   }
 });
@@ -875,6 +1462,14 @@ document.getElementById('noteInput').addEventListener('blur',()=>{
   const val=document.getElementById('noteInput').value.trim();
   if(val) state.notes[activeKey]=val; else delete state.notes[activeKey];
   persist(); renderCalendar();
+});
+document.getElementById('editTaskTimePicker').addEventListener('change',e=>{
+  if(editingTimeTaskIndex===null||!activeKey||!state.tasks[activeKey]) return;
+  const idx=editingTimeTaskIndex;
+  editingTimeTaskIndex=null;
+  state.tasks[activeKey][idx].time=(e.target.value||'').trim();
+  queueReminderSync();
+  persist(); renderTaskList();
 });
 
 // ── CARRY FORWARD ──────────────────────────────────────────────
@@ -898,6 +1493,7 @@ window.confirmCF=function(){
   const t=today(), todayK=toKey(t.y,t.m,t.d);
   if(!state.tasks[todayK]) state.tasks[todayK]=[];
   (window._cfTasks||[]).forEach((task,i)=>{ if(cfSelected.has(i)) state.tasks[todayK].push({id:Date.now()+i,text:task.text,done:false,time:task.time||''}); });
+  queueReminderSync();
   persist(); renderCalendar(); closeCF();
 };
 window.closeCF=function(){ document.getElementById('cfOverlay').classList.remove('open'); };
@@ -915,8 +1511,323 @@ function launchConfetti(){
 }
 
 // ── NOTIFICATIONS ──────────────────────────────────────────────
-function requestNotifPermission(){ if('Notification'in window&&Notification.permission==='default') Notification.requestPermission(); }
+function canUseNativeReminders(){
+  return !!(isNative && window.Capacitor && window.Capacitor.Plugins && window.Capacitor.Plugins.LocalNotifications);
+}
+function getNativeReminderPlugin(){
+  return window.Capacitor?.Plugins?.LocalNotifications;
+}
+function setReminderDiag(msg){
+  const el=document.getElementById('reminderDiag');
+  if(el) el.textContent=msg;
+}
+async function refreshReminderDiagnostics(){
+  if(canUseNativeReminders()){
+    try{
+      const LocalNotifications=getNativeReminderPlugin();
+      const perm=await LocalNotifications.checkPermissions();
+      let exact='n/a';
+      if(typeof LocalNotifications.checkExactNotificationSetting==='function'){
+        const exactStatus=await LocalNotifications.checkExactNotificationSetting();
+        exact=String(exactStatus?.value ?? exactStatus?.exact ?? exactStatus?.exactAlarm ?? exactStatus?.enabled ?? 'unknown');
+      }
+      setReminderDiag(`Native reminders: ${perm.display} | exact: ${exact}`);
+    }catch(e){
+      setReminderDiag('Native reminders: error reading status');
+    }
+    return;
+  }
+  if('Notification' in window){
+    setReminderDiag(`Web reminders: ${Notification.permission}`);
+  } else {
+    setReminderDiag('This device/browser does not support notifications');
+  }
+}
+async function initNativeReminderListeners(){
+  if(reminderListenerBound||!canUseNativeReminders()) return;
+  const LocalNotifications=getNativeReminderPlugin();
+  if(!LocalNotifications||typeof LocalNotifications.addListener!=='function') return;
+  await LocalNotifications.addListener('localNotificationReceived',()=>{
+    setReminderDiag('Last test: notification received by device');
+  });
+  await LocalNotifications.addListener('localNotificationActionPerformed',event=>{
+    handleNativeReminderAction(event).catch(e=>console.warn('Reminder action handling failed:',e));
+  });
+  reminderListenerBound=true;
+}
+function isExactSettingAllowed(setting){
+  if(setting===undefined||setting===null) return true;
+  if(typeof setting==='boolean') return setting;
+  if(typeof setting==='string') return !['denied','disabled','off'].includes(setting.toLowerCase());
+  return true;
+}
+async function ensureNativeReminderReady(showAlertOnFailure=false){
+  if(!canUseNativeReminders()) return false;
+  try{
+    const LocalNotifications=getNativeReminderPlugin();
+    let status=await LocalNotifications.checkPermissions();
+    if(status.display!=='granted') status=await LocalNotifications.requestPermissions();
+    if(status.display!=='granted'){
+      if(showAlertOnFailure) alert('Notifications are blocked for DayScore. Please allow notifications in Android settings.');
+      return false;
+    }
+
+    if(typeof LocalNotifications.checkExactNotificationSetting==='function'){
+      const exactStatus=await LocalNotifications.checkExactNotificationSetting();
+      const exactValue=exactStatus?.value ?? exactStatus?.exact ?? exactStatus?.exactAlarm ?? exactStatus?.enabled;
+      if(!isExactSettingAllowed(exactValue) && typeof LocalNotifications.changeExactNotificationSetting==='function'){
+        await LocalNotifications.changeExactNotificationSetting();
+      }
+    }
+
+    if(!reminderChannelReady && typeof LocalNotifications.createChannel==='function'){
+      try{ if(typeof LocalNotifications.deleteChannel==='function') await LocalNotifications.deleteChannel({id:LEGACY_REMINDER_CHANNEL_ID}); }catch(_e){}
+      try{ if(typeof LocalNotifications.deleteChannel==='function') await LocalNotifications.deleteChannel({id:REMINDER_CHANNEL_ID}); }catch(_e){}
+      await LocalNotifications.createChannel({
+        id:REMINDER_CHANNEL_ID,
+        name:'DayScore Reminders',
+        description:'Task due reminders',
+        importance:4,
+        visibility:1,
+        vibration:true,
+        sound:'default'
+      });
+      reminderChannelReady=true;
+    }
+
+    if(typeof LocalNotifications.registerActionTypes==='function'){
+      await LocalNotifications.registerActionTypes({
+        types:[{
+          id:REMINDER_ACTION_TYPE_ID,
+          actions:[
+            {id:'done',title:'Mark Done'},
+            {id:'snooze',title:`Snooze ${REMINDER_SNOOZE_MINUTES}m`}
+          ]
+        }]
+      });
+    }
+    await initNativeReminderListeners();
+    await refreshReminderDiagnostics();
+    return true;
+  }catch(e){
+    console.warn('Native reminder permission/setup failed:',e);
+    setReminderDiag('Native reminders: setup failed');
+    if(showAlertOnFailure) alert('Could not enable reminders on this device. Please check app notification settings.');
+    return false;
+  }
+}
+function hashText(s){
+  let h=0;
+  for(let i=0;i<s.length;i++) h=((h<<5)-h)+s.charCodeAt(i);
+  return Math.abs(h);
+}
+function reminderIdForTask(key,task){
+  return (hashText(`${key}:${task.id}`)%2000000000)+1;
+}
+function hmFromDate(d){
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function keyFromDate(d){
+  return toKey(d.getFullYear(),d.getMonth(),d.getDate());
+}
+function findTaskByNotification(notification){
+  const extra=notification?.extra||{};
+  const extraKey=extra.taskKey;
+  const extraTaskId=Number(extra.taskId);
+  if(extraKey&&Number.isFinite(extraTaskId)&&state.tasks[extraKey]){
+    const idx=state.tasks[extraKey].findIndex(t=>Number(t.id)===extraTaskId);
+    if(idx>=0) return {key:extraKey,index:idx,task:state.tasks[extraKey][idx]};
+  }
+  const nid=Number(notification?.id);
+  if(!Number.isFinite(nid)) return null;
+  for(const key of Object.keys(state.tasks||{})){
+    const tasks=state.tasks[key]||[];
+    for(let i=0;i<tasks.length;i++){
+      if(reminderIdForTask(key,tasks[i])===nid) return {key,index:i,task:tasks[i]};
+    }
+  }
+  return null;
+}
+async function handleNativeReminderAction(event){
+  const actionId=String(event?.actionId||'').toLowerCase();
+  if(!actionId||actionId==='tap') return;
+  const hit=findTaskByNotification(event?.notification);
+  if(!hit) return;
+
+  if(actionId==='done'){
+    if(!hit.task.done){
+      hit.task.done=true;
+      queueReminderSync();
+      persist();
+      renderCalendar();
+      if(activeKey===hit.key) renderTaskList();
+      setReminderDiag('Task marked done from notification');
+    }
+    return;
+  }
+
+  if(actionId==='snooze'){
+    const snoozeAt=new Date(Date.now()+REMINDER_SNOOZE_MINUTES*60000);
+    const snoozeKey=keyFromDate(snoozeAt);
+    if(snoozeKey===hit.key){
+      hit.task.time=hmFromDate(snoozeAt);
+      hit.task.done=false;
+      queueReminderSync();
+      persist();
+      renderCalendar();
+      if(activeKey===hit.key) renderTaskList();
+    } else if(canUseNativeReminders()){
+      const LocalNotifications=getNativeReminderPlugin();
+      await LocalNotifications.schedule({
+        notifications:[{
+          id:reminderIdForTask(hit.key,hit.task)+400000,
+          title:'DayScore - Task Due',
+          body:(hit.task.text||'Task due now').slice(0,120),
+          channelId:REMINDER_CHANNEL_ID,
+          actionTypeId:REMINDER_ACTION_TYPE_ID,
+          extra:{taskKey:hit.key,taskId:String(hit.task.id)},
+          schedule:{at:snoozeAt,allowWhileIdle:true}
+        }]
+      });
+    }
+    setReminderDiag(`Snoozed ${REMINDER_SNOOZE_MINUTES} minutes`);
+  }
+}
+function parseDueDate(key,time){
+  const m=/^(\d{2}):(\d{2})$/.exec((time||'').trim());
+  if(!m) return null;
+  const hh=Number(m[1]), mm=Number(m[2]);
+  if(hh<0||hh>23||mm<0||mm>59) return null;
+  const [y,mo,d]=key.split('-').map(Number);
+  if(!y||!mo||!d) return null;
+  const due=new Date(y,mo-1,d,hh,mm,0,0);
+  return Number.isNaN(due.getTime())?null:due;
+}
+async function clearNativeReminderTracking(){
+  const ids=JSON.parse(localStorage.getItem(REMINDER_TRACKED_IDS_KEY)||'[]');
+  if(canUseNativeReminders()&&ids.length){
+    try{
+      await getNativeReminderPlugin().cancel({notifications:ids.map(id=>({id:Number(id)}))});
+    }catch(e){
+      console.warn('Cancel native reminders failed:',e);
+    }
+  }
+  localStorage.removeItem(REMINDER_TRACKED_IDS_KEY);
+  localStorage.removeItem(REMINDER_TRACKED_PAYLOADS_KEY);
+}
+async function syncNativeReminders(){
+  if(!canUseNativeReminders()) return;
+  const ready=await ensureNativeReminderReady(false);
+  if(!ready) return;
+  const LocalNotifications=getNativeReminderPlugin();
+  const desired=[];
+  const now=Date.now();
+  Object.keys(state.tasks||{}).forEach(key=>{
+    (state.tasks[key]||[]).forEach(task=>{
+      if(!task.time||task.done) return;
+      let due=parseDueDate(key,task.time);
+      if(!due) return;
+      const dueMs=due.getTime();
+      if(dueMs<=now){
+        if(now-dueMs>120000) return;
+        due=new Date(now+5000);
+      }
+      desired.push({
+        id:reminderIdForTask(key,task),
+        title:'DayScore - Task Due',
+        body:(task.text||'Task due now').slice(0,120),
+        channelId:REMINDER_CHANNEL_ID,
+        actionTypeId:REMINDER_ACTION_TYPE_ID,
+        extra:{taskKey:key,taskId:String(task.id)},
+        schedule:{at:due,allowWhileIdle:true}
+      });
+    });
+  });
+
+  const trackedIds=JSON.parse(localStorage.getItem(REMINDER_TRACKED_IDS_KEY)||'[]').map(Number).filter(Number.isFinite);
+  const trackedPayloads=JSON.parse(localStorage.getItem(REMINDER_TRACKED_PAYLOADS_KEY)||'{}');
+  const desiredIds=desired.map(n=>n.id);
+  const desiredPayloads={};
+  desired.forEach(n=>{ desiredPayloads[String(n.id)]=`${n.body}|${new Date(n.schedule.at).getTime()}`; });
+
+  const cancelIds=trackedIds.filter(id=>!desiredIds.includes(id));
+  const upsert=desired.filter(n=>trackedPayloads[String(n.id)]!==desiredPayloads[String(n.id)]);
+
+  if(cancelIds.length){
+    await LocalNotifications.cancel({notifications:cancelIds.map(id=>({id}))});
+  }
+  if(!desired.length){
+    setSyncStatus('synced','No pending reminders');
+    localStorage.setItem(REMINDER_TRACKED_IDS_KEY,JSON.stringify([]));
+    localStorage.setItem(REMINDER_TRACKED_PAYLOADS_KEY,JSON.stringify({}));
+    return;
+  }
+
+  if(upsert.length){
+    await LocalNotifications.schedule({notifications:upsert});
+  }
+  localStorage.setItem(REMINDER_TRACKED_IDS_KEY,JSON.stringify(desiredIds));
+  localStorage.setItem(REMINDER_TRACKED_PAYLOADS_KEY,JSON.stringify(desiredPayloads));
+  setSyncStatus('synced',`Scheduled ${desired.length} reminder${desired.length===1?'':'s'}`);
+}
+function queueReminderSync(){
+  clearTimeout(reminderSyncTimer);
+  reminderSyncTimer=setTimeout(()=>{ syncNativeReminders().catch(e=>console.warn('Native reminder sync failed:',e)); refreshReminderDiagnostics(); },250);
+}
+async function requestNotifPermission(){
+  if(canUseNativeReminders()){
+    await ensureNativeReminderReady(true);
+    return;
+  }
+  if('Notification' in window && Notification.permission==='default') Notification.requestPermission();
+}
+async function sendReminderTestNotification(){
+  if(canUseNativeReminders()){
+    const ready=await ensureNativeReminderReady(true);
+    if(!ready) return;
+    const LocalNotifications=getNativeReminderPlugin();
+    const nowPlus2s=new Date(Date.now()+2000);
+    const when=new Date(Date.now()+10000);
+    try{
+      await LocalNotifications.schedule({
+        notifications:[
+          {
+            id:1999999998,
+            title:'DayScore Test (Now)',
+            body:'If banner/sound appears now, native notifications are working.',
+            channelId:REMINDER_CHANNEL_ID,
+            actionTypeId:REMINDER_ACTION_TYPE_ID,
+            extra:{taskKey:'',taskId:'0'},
+            schedule:{at:nowPlus2s,allowWhileIdle:true}
+          },
+          {
+            id:1999999999,
+            title:'DayScore Test (10s)',
+            body:'Second reminder check after 10 seconds.',
+            channelId:REMINDER_CHANNEL_ID,
+            actionTypeId:REMINDER_ACTION_TYPE_ID,
+            extra:{taskKey:'',taskId:'0'},
+            schedule:{at:when,allowWhileIdle:true}
+          }
+        ]
+      });
+      setReminderDiag('Test queued: one in ~2s and one in ~10s');
+      alert('Test alerts scheduled (~2s and ~10s). Lock screen and watch for banner/sound.');
+    }catch(e){
+      console.warn('Test reminder failed:',e);
+      setReminderDiag('Test failed: check notification + exact alarm settings');
+      alert('Test reminder failed. Please allow notifications and exact alarms in Android settings.');
+    }
+    return;
+  }
+  if('Notification' in window){
+    if(Notification.permission!=='granted') await Notification.requestPermission();
+    if(Notification.permission==='granted') new Notification('DayScore Test',{body:'Browser reminder path is working.'});
+    refreshReminderDiagnostics();
+  }
+}
 function checkDueNotifications(){
+  if(canUseNativeReminders()) return;
   if(!('Notification'in window)||Notification.permission!=='granted') return;
   const t=today(), key=toKey(t.y,t.m,t.d);
   const tasks=state.tasks[key]||[];
@@ -950,7 +1861,9 @@ document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeModal();close
 document.getElementById('prevBtn').addEventListener('click',()=>{ if(--viewMonth<0){viewMonth=11;viewYear--;} renderCalendar(); });
 document.getElementById('nextBtn').addEventListener('click',()=>{ if(++viewMonth>11){viewMonth=0;viewYear++;} renderCalendar(); });
 document.getElementById('settingsBtn').addEventListener('click',e=>{ e.stopPropagation(); document.getElementById('settingsPanel').classList.toggle('open'); });
+document.getElementById('settingsBtn').addEventListener('click',()=>{ refreshReminderDiagnostics(); });
 document.addEventListener('click',e=>{ const p=document.getElementById('settingsPanel'); if(!p.contains(e.target)&&!e.target.closest('#settingsBtn'))p.classList.remove('open'); });
+document.getElementById('testReminderBtn').addEventListener('click',()=>{ sendReminderTestNotification(); });
 document.getElementById('quickAddBtn').addEventListener('click',()=>{
   const t=today();
   openModal(toKey(t.y,t.m,t.d));
@@ -959,13 +1872,15 @@ document.getElementById('quickAddBtn').addEventListener('click',()=>{
 // Reload when app comes back to foreground
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible'&&currentUser){
-    loadFromFirebase().then(()=>renderCalendar());
+    loadFromFirebase().then(()=>{ renderCalendar(); queueReminderSync(); renderUtilityDrawer(); });
   }
 });
 
 // ── INIT ───────────────────────────────────────────────────────
 initTheme();
 const tStart=today(); viewYear=tStart.y; viewMonth=tStart.m;
+startPomodoroTicker();
+setupUtilityDrawer();
 </script>
 </body>
 </html>
