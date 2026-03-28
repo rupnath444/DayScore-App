@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+www/build/
+dist/
+
+# Android / Gradle build artifacts
+android/.gradle/
+android/build/
+android/app/build/
+android/capacitor-cordova-android-plugins/build/
+android/*/build/
+
+# Android local machine files
+android/local.properties
+*.keystore
+*.jks
+*.p12
+
+# IDE / editor
+.vscode/
+.idea/
+*.iml
+
+# Logs and temp
+*.log
+*.tmp
+*.temp
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Local runtime Firebase config (never commit real keys)
+www/firebase-config.js
+android/app/src/main/assets/public/firebase-config.js

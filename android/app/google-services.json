@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1042840162617",
+    "project_id": "dayscore-sync",
+    "storage_bucket": "dayscore-sync.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1042840162617:android:de3f9cfd467f1a1e8758e8",
+        "android_client_info": {
+          "package_name": "com.rupnath.dayscore"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1042840162617-pachm4p0lbumq1gi99cit5uucq4dnla2.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.rupnath.dayscore",
+            "certificate_hash": "c065de0aa850980515864d5f5e3545e81ba81d3e"
+          }
+        },
+        {
+          "client_id": "1042840162617-bbghct21d2j9ookvc13tffv96ur7ihce.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC6s0XpYWXn5H9FSitbugwiRa_Uw2jn2VA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1042840162617-bbghct21d2j9ookvc13tffv96ur7ihce.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
