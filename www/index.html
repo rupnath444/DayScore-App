@@ -613,8 +613,6 @@ header{display:flex;flex-direction:column;align-items:center;padding:12px 16px 1
       <span class="settings-email" id="settingsUserEmail">Not signed in</span>
       <button class="signout-btn" id="signOutBtn">Sign out</button>
     </div>
-    <button class="reminder-test-btn" id="testReminderBtn">Test Alert Now</button>
-    <div class="settings-note" id="reminderDiag">Reminder status: checking...</div>
   </div>
 </div>
 
@@ -2065,7 +2063,6 @@ document.getElementById('nextBtn').addEventListener('click',()=>{ if(++viewMonth
 document.getElementById('settingsBtn').addEventListener('click',e=>{ e.stopPropagation(); document.getElementById('settingsPanel').classList.toggle('open'); });
 document.getElementById('settingsBtn').addEventListener('click',()=>{ refreshReminderDiagnostics(); });
 document.addEventListener('click',e=>{ const p=document.getElementById('settingsPanel'); if(!p.contains(e.target)&&!e.target.closest('#settingsBtn'))p.classList.remove('open'); });
-document.getElementById('testReminderBtn').addEventListener('click',()=>{ sendReminderTestNotification(); });
 document.getElementById('quickAddBtn').addEventListener('click',()=>{
   const t=today();
   openModal(toKey(t.y,t.m,t.d));
