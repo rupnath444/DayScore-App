@@ -16,6 +16,7 @@
   --green:#00E676;--green-bg:#0C2E22;--green-border:#13784C;--green-dim:#00CD69;
   --red:#FF5252;--red-bg:#2E1414;--red-border:#7A2B2B;--red-dim:#E84949;
   --accent:#BB86FC;--accent-bg:#2B1E36;--yellow:#F5C430;--yellow-bg:#2A2210;
+  --blue:#5AA8FF;--blue-bg:rgba(90,168,255,.2);
   --future:#141414;--shadow:rgba(0,0,0,0);--overlay:rgba(0,0,0,0.78);
   --accent-glow:rgba(187,134,252,.35);
   --utility-bg:#121212;--utility-border:#1e2433;
@@ -27,6 +28,7 @@
   --green:#55B581;--green-bg:#E8F6EE;--green-border:#A7D9BF;--green-dim:#3E9F6D;
   --red:#E17055;--red-bg:#FBE9E4;--red-border:#F3C2B5;--red-dim:#CF6048;
   --accent:#6C5CE7;--accent-bg:#ECE9FF;--yellow:#D4A35F;--yellow-bg:#F8EBD6;
+  --blue:#2F7EDB;--blue-bg:rgba(47,126,219,.18);
   --future:#F6F1E7;--shadow:rgba(44,62,80,0.12);--overlay:rgba(44,62,80,0.35);
   --accent-glow:rgba(108,92,231,.28);
   --utility-bg:#f6efe2;--utility-border:#d8ccb7;
@@ -181,7 +183,7 @@ header{display:flex;flex-direction:column;align-items:center;padding:12px 16px 1
 .pomo-actions{display:flex;gap:8px;justify-content:center;}
 .pomo-set{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;overflow:hidden;max-height:0;opacity:0;pointer-events:none;transition:max-height .2s ease,opacity .2s ease;}
 .pomo-set.open{max-height:72px;opacity:1;pointer-events:auto;}
-.pomo-num{width:76px;text-align:center;}
+.pomo-num{width:96px;text-align:center;}
 .pomo-suffix{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);margin-right:4px;}
 .utility-btn{background:var(--surface2);border:1px solid var(--border2);color:var(--text);border-radius:8px;padding:8px 12px;cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.6px;}
 .utility-btn.primary{background:var(--accent-bg);border-color:var(--accent);color:var(--accent);} 
@@ -207,11 +209,39 @@ header{display:flex;flex-direction:column;align-items:center;padding:12px 16px 1
 [data-theme="light"] input[type="time"],
 [data-theme="light"] input[type="date"]{color-scheme:light;}
 
-.diary-field{display:flex;flex-direction:column;gap:6px;}
-.diary-label{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);letter-spacing:.5px;display:flex;align-items:center;gap:6px;}
-.diary-input{width:100%;min-height:64px;background:#0f141e;border:1px solid #2a3347;border-radius:10px;padding:10px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;resize:none;outline:none;}
-.diary-input:focus{border-color:#06B6D4;}
-.diary-status{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);}
+.diary-today-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:6px;position:relative;min-height:240px;}
+.diary-today-date{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.8px;color:var(--muted2);text-transform:uppercase;}
+.diary-today-title{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:1px;color:var(--text);line-height:1;padding-right:120px;}
+.diary-today-body{font-family:'DM Sans',sans-serif;font-size:12px;line-height:1.55;color:var(--muted);white-space:pre-wrap;overflow-wrap:anywhere;background:transparent;border:none;outline:none;resize:none;flex:1;padding:4px 0;width:100%;box-sizing:border-box;}
+.diary-book-btn{position:absolute;top:12px;right:12px;background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:8px 12px;cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.7px;z-index:10;}
+.diary-book{display:none;flex-direction:column;gap:8px;}
+.diary-book.open{display:flex;}
+.diary-book-pager{display:flex;flex-direction:column;overflow-y:auto;scroll-snap-type:y mandatory;scrollbar-width:thin;scrollbar-color:var(--border2) transparent;flex:1;gap:12px;padding:4px 0;}
+.diary-book-pager::-webkit-scrollbar{width:4px;}
+.diary-book-pager::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px;}
+.diary-search-btn{background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:8px 12px;cursor:pointer;font-family:'DM Mono',monospace;font-size:12px;flex-shrink:0;height:36px;display:flex;align-items:center;justify-content:center;}
+.diary-book-spread{flex:0 0 100%;scroll-snap-align:start;display:flex;flex-direction:column;gap:12px;position:relative;padding:4px 0;}
+.diary-book-tile{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;min-height:140px;}
+.diary-tile-date{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.75px;color:var(--muted2);text-transform:uppercase;}
+.diary-tile-content{font-family:'DM Sans',sans-serif;font-size:12px;line-height:1.45;color:var(--text);white-space:pre-wrap;overflow-wrap:anywhere;flex:1;overflow-y:auto;user-select:text;}
+.diary-tile-empty{opacity:.68;font-style:italic;color:var(--muted2);}
+.diary-book-indicator{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);text-align:center;margin-top:8px;}
+
+/* DIARY BOOK MODAL */
+.diary-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:300;align-items:flex-end;justify-content:center;}
+.diary-modal-overlay.open{display:flex;}
+.diary-modal{background:var(--surface);border-radius:24px 24px 0 0;width:100%;max-width:600px;max-height:90vh;overflow-y:auto;display:flex;flex-direction:column;padding:20px;gap:16px;box-shadow:0 -4px 24px var(--shadow);}
+.diary-modal-header{display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--border);padding-bottom:12px;}
+.diary-modal-title{font-family:'Bebas Neue',sans-serif;font-size:20px;letter-spacing:1px;color:var(--text);}
+.diary-modal-tools{display:flex;align-items:center;gap:8px;}
+.diary-modal-date{background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:7px 8px;font-family:'DM Mono',monospace;font-size:11px;}
+.diary-modal-close{background:none;border:none;font-size:24px;cursor:pointer;color:var(--text);padding:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;}
+.diary-pages-wrapper{display:grid;grid-template-columns:1fr 1fr;gap:16px;min-height:300px;}
+.diary-page-modal{background:var(--surface2);border:2px solid var(--border);border-radius:8px;padding:16px;min-height:280px;display:flex;flex-direction:column;gap:8px;position:relative;box-shadow:0 4px 12px var(--shadow);}
+.diary-page-modal::before{content:'';position:absolute;left:16px;top:12px;width:2px;height:calc(100% - 24px);background:linear-gradient(to bottom,transparent,var(--border2) 50%,transparent);opacity:.3;}
+.diary-page-date-modal{font-family:'DM Mono',monospace;font-size:8px;letter-spacing:.75px;color:var(--muted2);text-transform:uppercase;padding-left:10px;}
+.diary-page-content-modal{font-family:'DM Sans',sans-serif;font-size:13px;line-height:1.5;color:var(--text);flex:1;padding-left:10px;white-space:pre-wrap;overflow-wrap:anywhere;}
+.diary-page-empty-modal{opacity:.5;font-style:italic;color:var(--muted2);}
 
 @media (max-width:700px){
   .pomo-ring{width:144px;height:144px;}
@@ -249,12 +279,11 @@ header{display:flex;flex-direction:column;align-items:center;padding:12px 16px 1
 .task-check.locked{cursor:not-allowed;border-style:dashed;color:var(--muted);}
 .task-text{flex:1;font-size:13px;color:var(--text);line-height:1.4;outline:none;background:transparent;border:none;font-family:'DM Sans',sans-serif;min-width:0;}
 .task-text.done-text{text-decoration:line-through;color:var(--muted2);}
-.task-time{font-family:'DM Mono',monospace;font-size:9px;color:var(--muted2);flex-shrink:0;cursor:pointer;padding:2px 5px;border-radius:4px;border:1px solid transparent;transition:all .15s;}
-.task-time.has-time{color:var(--accent);border-color:var(--accent-bg);}
+.task-time{font-family:'DM Mono',monospace;font-size:9px;color:var(--blue);background:var(--blue-bg);flex-shrink:0;cursor:pointer;padding:2px 5px;border-radius:4px;border:1px solid transparent;transition:all .15s;}
+.task-time.has-time{color:var(--blue);border-color:var(--blue-bg);}
 .task-time.overdue{color:var(--red);}
-.task-del{background:none;border:none;color:transparent;cursor:pointer;font-size:14px;line-height:1;padding:2px 4px;border-radius:4px;transition:all .15s;}
-.task-item:hover .task-del{color:var(--muted2);}
-.task-del:hover{color:var(--red)!important;background:var(--red-bg);}
+.task-del{background:none;border:none;color:var(--red);cursor:pointer;font-size:14px;line-height:1;padding:2px 4px;border-radius:4px;transition:all .15s;opacity:.95;}
+.task-del:hover{color:#fff;background:var(--red);}
 .add-task-row{display:flex;gap:6px;}
 .add-task-input{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;transition:border-color .15s;}
 .add-task-input:focus{border-color:var(--accent);}
@@ -264,11 +293,13 @@ header{display:flex;flex-direction:column;align-items:center;padding:12px 16px 1
 .add-btn{background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:10px 14px;cursor:pointer;font-size:18px;line-height:1;transition:all .15s;display:flex;align-items:center;justify-content:center;}
 .add-btn:hover{background:var(--accent);color:#fff;}
 .empty-tasks{text-align:center;padding:20px 0;color:var(--muted2);font-size:11px;font-family:'DM Mono',monospace;letter-spacing:.5px;}
-.note-section{border-top:1px solid var(--border);padding-top:12px;}
-.note-label{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;margin-bottom:6px;}
-.note-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;resize:none;transition:border-color .15s;line-height:1.5;min-height:80px;}
+.note-section{border-top:1px solid var(--border);padding-top:12px;display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.note-column{display:flex;flex-direction:column;gap:6px;}
+.note-label{font-size:10px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:1px;text-transform:uppercase;margin-bottom:0;}
+.note-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:13px;outline:none;resize:none;transition:border-color .15s;line-height:1.45;min-height:100px;flex:1;}
 .note-input:focus{border-color:var(--accent);}
 .note-input::placeholder{color:var(--muted2);}
+.diary-input{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;line-height:1.45;min-height:100px;overflow-y:auto;white-space:pre-wrap;word-break:break-word;user-select:text;cursor:text;}
 .modal-body::-webkit-scrollbar{width:3px;}
 .modal-body::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px;}
 
@@ -504,9 +535,7 @@ header{display:flex;flex-direction:column;align-items:center;padding:12px 16px 1
           <button class="pomo-ring" id="pomoRing" aria-label="Pomodoro clock"><span class="pomo-time" id="pomoTime">25:00</span></button>
           <div class="utility-sub" id="pomoHint">Tap clock to set duration</div>
           <div class="pomo-set" id="pomoSetPanel">
-            <input class="utility-input pomo-num" id="pomoHoursInput" type="number" min="0" max="23" step="1" value="0" inputmode="numeric">
-            <span class="pomo-suffix">hr</span>
-            <input class="utility-input pomo-num" id="pomoMinutesInput" type="number" min="0" max="59" step="1" value="25" inputmode="numeric">
+            <input class="utility-input pomo-num" id="pomoMinutesInput" type="number" min="1" max="1439" step="1" value="25" inputmode="numeric">
             <span class="pomo-suffix">min</span>
             <button class="utility-btn" id="pomoSetBtn">Set</button>
           </div>
@@ -538,16 +567,20 @@ header{display:flex;flex-direction:column;align-items:center;padding:12px 16px 1
       </section>
 
       <section class="utility-slide" id="slideDiary">
-        <div class="utility-title" id="dailyEntryTitle">Daily Entry of Today</div>
-        <div class="diary-field">
-          <div class="diary-label">⭐ Something happy to remember from today</div>
-          <textarea class="diary-input" id="diaryWin" placeholder="Write your biggest win..."></textarea>
+        <div class="utility-title" id="dailyEntryTitle">Diary Entry of Today</div>
+        <div class="diary-today-card">
+          <div class="diary-today-date" id="diaryTodayDate">-</div>
+          <div class="diary-today-title">Today</div>
+          <textarea class="diary-today-body" id="diaryTodayBody" placeholder="Something to remember today"></textarea>
+          <button class="diary-book-btn" id="diaryBookBtn" type="button">Open Diary Book</button>
         </div>
-        <div class="diary-field">
-          <div class="diary-label">🔄 What would you change?</div>
-          <textarea class="diary-input" id="diaryChange" placeholder="Write what you would improve..."></textarea>
+        <div class="diary-book" id="diaryBookWrap">
+          <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+            <div class="diary-book-pager" id="diaryBookPager"></div>
+            <button class="diary-search-btn" id="diarySearchBtn" type="button" title="Search diary by date">🔍</button>
+          </div>
+          <div class="diary-book-indicator" id="diaryBookIndicator"></div>
         </div>
-        <div class="diary-status" id="diaryStatus"></div>
       </section>
     </div>
   </div>
@@ -613,10 +646,32 @@ header{display:flex;flex-direction:column;align-items:center;padding:12px 16px 1
       </div>
       <input id="editTaskTimePicker" type="time" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0;border:0;padding:0;">
       <div class="note-section">
-        <div class="note-label">📝 Daily Note</div>
-        <textarea class="note-input" id="noteInput" placeholder="How did today go?" maxlength="500"></textarea>
+        <div class="note-column">
+          <div class="note-label">📝 Daily Note</div>
+          <textarea class="note-input" id="noteInput" placeholder="Notes to remember today" maxlength="500"></textarea>
+        </div>
+        <div class="note-column">
+          <div class="note-label">📖 Diary Entry</div>
+          <textarea class="note-input" id="diaryInput" placeholder="Write your diary entry..." maxlength="1000" style="min-height:80px;"></textarea>
+        </div>
       </div>
     </div>
+  </div>
+</div>
+
+<!-- DIARY BOOK MODAL -->
+<div class="diary-modal-overlay" id="diaryModalOverlay">
+  <div class="diary-modal" id="diaryModal">
+    <div class="diary-modal-header">
+      <div class="diary-modal-title" id="diaryModalTitle">My Diary</div>
+      <div class="diary-modal-tools">
+        <input class="diary-modal-date" id="diaryModalDateInput" type="date" aria-label="Search diary by date">
+        <button class="diary-search-btn" id="diaryModalSearchBtn" type="button" title="Search diary by date">🔍</button>
+      </div>
+      <button class="diary-modal-close" id="diaryModalClose">×</button>
+    </div>
+    <div class="diary-pages-wrapper" id="diaryPagesWrapper"></div>
+    <div class="diary-book-indicator" id="diaryModalIndicator"></div>
   </div>
 </div>
 
@@ -975,7 +1030,6 @@ function renderCalendar(){
     const key=toKey(viewYear,viewMonth,d);
     const tasks=state.tasks[key]||[];
     const total=tasks.length, done=tasks.filter(t=>t.done).length;
-    const hasNote=!!(state.notes&&state.notes[key]&&state.notes[key].trim());
     let cls='day-tile', dot='';
     if(isToday(viewYear,viewMonth,d)) cls+=' today';
     else if(isPast(viewYear,viewMonth,d)){
@@ -984,7 +1038,7 @@ function renderCalendar(){
     } else cls+=' future-day';
     let pips='';
     for(let p=0;p<Math.min(total,4);p++) pips+=`<div class="task-pip ${tasks[p]?.done?'done':'undone'}"></div>`;
-    html+=`<div class="${cls}" onclick="openModal('${key}')">${dot}<div class="day-num">${d}</div><div class="task-preview">${pips}</div>${total>0?`<div class="task-count">${done}/${total}</div>`:''}${hasNote?`<div class="note-indicator">📝</div>`:''}</div>`;
+    html+=`<div class="${cls}" onclick="openModal('${key}')">${dot}<div class="day-num">${d}</div><div class="task-preview">${pips}</div>${total>0?`<div class="task-count">${done}/${total}</div>`:''}</div>`;
   }
   const usedCells = firstDay + dim;
   const trailingCells = (7 - (usedCells % 7)) % 7;
@@ -1015,6 +1069,7 @@ function ensureUtilityState(){
   if(typeof state.utility.goalNote!=='string') state.utility.goalNote='';
   if(!state.utility.pomoMinutes||state.utility.pomoMinutes<1) state.utility.pomoMinutes=25;
   if(!state.diary||typeof state.diary!=='object') state.diary={};
+  if(!state.diaryEntries||typeof state.diaryEntries!=='object') state.diaryEntries={};
 }
 function getPomodoroDurationMs(){
   ensureUtilityState();
@@ -1029,12 +1084,10 @@ function formatDurationLabel(mins){
   return rem?`${h}h ${rem}m`:`${h}h`;
 }
 function syncPomodoroInputs(){
-  const hIn=document.getElementById('pomoHoursInput');
   const mIn=document.getElementById('pomoMinutesInput');
-  if(!hIn||!mIn) return;
+  if(!mIn) return;
   const mins=Math.max(1,Math.floor(state.utility?.pomoMinutes||25));
-  hIn.value=String(Math.floor(mins/60));
-  mIn.value=String(mins%60);
+  mIn.value=String(mins);
 }
 function formatMs(ms){
   const s=Math.max(0,Math.floor(ms/1000));
@@ -1117,7 +1170,7 @@ function togglePomodoroSetPanel(){
   const panel=document.getElementById('pomoSetPanel');
   if(!panel||getPomodoroState().running) return;
   panel.classList.toggle('open');
-  if(panel.classList.contains('open')) document.getElementById('pomoHoursInput')?.focus();
+  if(panel.classList.contains('open')) document.getElementById('pomoMinutesInput')?.focus();
   renderPomodoro();
 }
 function closePomodoroSetPanel(){
@@ -1126,21 +1179,17 @@ function closePomodoroSetPanel(){
   panel.classList.remove('open');
   renderPomodoro();
 }
-function setPomodoroDurationFromInputs(){
+function setPomodoroDurationFromInputs(closePanel=false){
   ensureUtilityState();
   if(getPomodoroState().running) return;
-  const hIn=document.getElementById('pomoHoursInput');
   const mIn=document.getElementById('pomoMinutesInput');
-  if(!hIn||!mIn) return;
-  const hours=Math.max(0,Math.min(23,Number(hIn.value||0)));
-  const mins=Math.max(0,Math.min(59,Number(mIn.value||0)));
-  const total=Math.max(1,Math.min(1439,Math.round(hours*60+mins)));
+  if(!mIn) return;
+  const total=Math.max(1,Math.min(1439,Math.round(Number(mIn.value||25))));
   state.utility.pomoMinutes=total;
-  hIn.value=String(Math.floor(total/60));
-  mIn.value=String(total%60);
+  mIn.value=String(total);
   localStorage.setItem(POMO_DURATION_KEY,String(state.utility.pomoMinutes));
   setPomodoroState(false,0,getPomodoroDurationMs());
-  document.getElementById('pomoSetPanel')?.classList.remove('open');
+  if(closePanel) document.getElementById('pomoSetPanel')?.classList.remove('open');
   persist();
   renderPomodoro();
 }
@@ -1165,40 +1214,87 @@ function renderGoal(){
     targetText.textContent=target.toLocaleDateString(undefined,opts);
   }
 }
-function diaryKeyForToday(){
-  const t=today();
-  return toKey(t.y,t.m,t.d);
+function dateToDiaryKey(d){
+  return toKey(d.getFullYear(),d.getMonth(),d.getDate());
+}
+function parseDiaryKey(k){
+  const p=(k||'').split('-').map(Number);
+  if(p.length!==3||p.some(Number.isNaN)) return null;
+  return new Date(p[0],p[1]-1,p[2]);
+}
+function formatDiaryDate(d){
+  return d.toLocaleDateString(undefined,{weekday:'short',day:'2-digit',month:'short',year:'numeric'});
+}
+function getDiaryContentByKey(key){
+  const note=(state.diaryEntries?.[key]||'').trim();
+  if(note) return note;
+  const legacy=state.diary?.[key];
+  if(!legacy||typeof legacy!=='object') return '';
+  const parts=[legacy.win||'',legacy.change||''].map(v=>String(v).trim()).filter(Boolean);
+  return parts.join('\n\n');
+}
+function collectDiaryEntries(){
+  const keySet=new Set([...(Object.keys(state.diaryEntries||{})),...(Object.keys(state.diary||{}))]);
+  const list=[...keySet].map(key=>({key,date:parseDiaryKey(key),content:getDiaryContentByKey(key)})).filter(e=>e.date&&e.content.trim());
+  list.sort((a,b)=>b.date-a.date);
+  return list;
+}
+function buildDiaryBookPages(entries){
+  const pages=[];
+  for(let i=0;i<entries.length;i+=2){
+    pages.push(entries.slice(i,i+2));
+  }
+  return pages;
+}
+function renderDiaryTile(entry){
+  if(!entry) return `<div class="diary-book-tile"><div class="diary-tile-content diary-tile-empty">This day is still unwritten...</div></div>`;
+  return `<div class="diary-book-tile"><div class="diary-tile-date">${formatDiaryDate(entry.date)}</div><div class="diary-tile-content">${escHtml(entry.content)}</div></div>`;
+}
+function applyDiaryBookDepth(){
+  const pager=document.getElementById('diaryBookPager');
+  if(!pager) return;
+  const spreads=[...pager.querySelectorAll('.diary-book-spread')];
+  const base=pager.scrollTop/Math.max(1,pager.clientHeight);
+  spreads.forEach((el,i)=>{
+    const dist=Math.min(1,Math.abs(base-i));
+    el.style.transform=`scale(${1-dist*0.05})`;
+    el.style.opacity=String(1-dist*0.2);
+  });
+}
+function updateDiaryBookIndicator(total,current){
+  const el=document.getElementById('diaryBookIndicator');
+  if(!el) return;
+  if(total<=0){ el.textContent='No diary entries yet'; return; }
+  el.textContent=`Page ${current+1} of ${total}`;
 }
 function renderDiary(){
   ensureUtilityState();
-  const key=diaryKeyForToday();
-  const item=state.diary[key]||{win:'',change:''};
+  const todayDateEl=document.getElementById('diaryTodayDate');
+  const todayBodyEl=document.getElementById('diaryTodayBody');
   const title=document.getElementById('dailyEntryTitle');
-  const win=document.getElementById('diaryWin');
-  const chg=document.getElementById('diaryChange');
-  if(title){
-    const n=new Date();
-    const ds=n.toLocaleDateString(undefined,{day:'2-digit',month:'short',year:'numeric'});
-    title.textContent=`Daily Entry of ${ds}`;
+  const today=new Date();
+  const todayKey=dateToDiaryKey(today);
+  const todayContent=getDiaryContentByKey(todayKey);
+  const todayFormatted=formatDiaryDate(today);
+  if(title) title.textContent=`Diary Entry of ${todayFormatted}`;
+  if(todayDateEl) todayDateEl.textContent=todayFormatted;
+  if(todayBodyEl){
+    if(document.activeElement!==todayBodyEl) todayBodyEl.value=todayContent||'';
   }
-  if(win&&document.activeElement!==win) win.value=item.win||'';
-  if(chg&&document.activeElement!==chg) chg.value=item.change||'';
-}
-function scheduleDiarySave(){
-  clearTimeout(diarySaveTimer);
-  const status=document.getElementById('diaryStatus');
-  if(status) status.textContent='Saving...';
-  diarySaveTimer=setTimeout(()=>{
-    ensureUtilityState();
-    const key=diaryKeyForToday();
-    state.diary[key]={
-      win:(document.getElementById('diaryWin')?.value||'').trim(),
-      change:(document.getElementById('diaryChange')?.value||'').trim(),
-      updatedAt:Date.now()
-    };
-    persist();
-    if(status) status.textContent='Saved';
-  },2000);
+
+  const pager=document.getElementById('diaryBookPager');
+  if(!pager) return;
+  const entries=collectDiaryEntries();
+  const pages=buildDiaryBookPages(entries);
+  if(!pages.length){
+    pager.innerHTML='<div class="diary-book-spread"><div class="diary-book-tile"><div class="diary-tile-content diary-tile-empty">Write notes in any calendar day to build your diary.</div></div><div class="diary-book-tile"><div class="diary-tile-content diary-tile-empty">Your entries will appear here.</div></div></div>';
+    updateDiaryBookIndicator(0,0);
+    return;
+  }
+  pager.innerHTML=pages.map(p=>`<div class="diary-book-spread">${renderDiaryTile(p[0])}${renderDiaryTile(p[1]||null)}</div>`).join('');
+  const idx=Math.round(pager.scrollTop/Math.max(1,pager.clientHeight));
+  updateDiaryBookIndicator(pages.length,Math.max(0,Math.min(pages.length-1,idx)));
+  applyDiaryBookDepth();
 }
 function setupUtilityDrawer(){
   const track=document.getElementById('utilityTrack');
@@ -1262,14 +1358,23 @@ function setupUtilityDrawer(){
   document.getElementById('pomoToggleBtn')?.addEventListener('click',togglePomodoro);
   document.getElementById('pomoResetBtn')?.addEventListener('click',resetPomodoro);
   document.getElementById('pomoRing')?.addEventListener('click',togglePomodoroSetPanel);
-  document.getElementById('pomoSetBtn')?.addEventListener('click',setPomodoroDurationFromInputs);
-  document.getElementById('pomoHoursInput')?.addEventListener('change',setPomodoroDurationFromInputs);
-  document.getElementById('pomoMinutesInput')?.addEventListener('change',setPomodoroDurationFromInputs);
+  document.getElementById('pomoSetBtn')?.addEventListener('click',()=>setPomodoroDurationFromInputs(true));
+  document.getElementById('pomoMinutesInput')?.addEventListener('focus',()=>document.getElementById('pomoSetPanel')?.classList.add('open'));
+  document.getElementById('pomoSetPanel')?.addEventListener('pointerdown',e=>e.stopPropagation());
+  document.getElementById('pomoSetPanel')?.addEventListener('click',e=>e.stopPropagation());
+  document.getElementById('pomoMinutesInput')?.addEventListener('pointerdown',e=>e.stopPropagation());
   document.addEventListener('pointerdown',e=>{
-    const target=e.target;
     const panel=document.getElementById('pomoSetPanel');
+    const ring=document.getElementById('pomoRing');
     if(!panel||!panel.classList.contains('open')) return;
-    if(target instanceof Element && (target.closest('#pomoSetPanel')||target.closest('#pomoRing'))) return;
+    const target=e.target;
+    const clickedInsideByTarget = target instanceof Node && (panel.contains(target) || (ring?ring.contains(target):false));
+    if(clickedInsideByTarget) return;
+
+    const path=typeof e.composedPath==='function'?e.composedPath():[];
+    const clickedInsideByPath=Array.isArray(path) && path.some(node=>node===panel || node===ring);
+    const clickedInside=clickedInsideByPath;
+    if(clickedInside) return;
     closePomodoroSetPanel();
   });
 
@@ -1299,8 +1404,32 @@ function setupUtilityDrawer(){
     goalNoteSaveTimer=setTimeout(()=>persist(),500);
   });
 
-  document.getElementById('diaryWin')?.addEventListener('input',scheduleDiarySave);
-  document.getElementById('diaryChange')?.addEventListener('input',scheduleDiarySave);
+  document.getElementById('diaryBookBtn')?.addEventListener('click',()=>{
+    openDiaryBookModal();
+  });
+  document.getElementById('diaryTodayBody')?.addEventListener('input',e=>{
+    ensureUtilityState();
+    const today=new Date();
+    const todayKey=dateToDiaryKey(today);
+    state.diaryEntries=state.diaryEntries||{};
+    const value=(e.target.value||'').slice(0,5000).trim();
+    if(value) state.diaryEntries[todayKey]=value;
+    else delete state.diaryEntries[todayKey];
+    clearTimeout(diarySaveTimer);
+    diarySaveTimer=setTimeout(()=>{
+      persist();
+      renderDiary();
+    },800);
+  });
+
+  document.getElementById('diaryBookPager')?.addEventListener('scroll',()=>{
+    const pager=document.getElementById('diaryBookPager');
+    if(!pager) return;
+    const total=buildDiaryBookPages(collectDiaryEntries()).length;
+    const idx=Math.round(pager.scrollTop/Math.max(1,pager.clientHeight));
+    updateDiaryBookIndicator(total,Math.max(0,Math.min(Math.max(0,total-1),idx)));
+    applyDiaryBookDepth();
+  });
 }
 function renderUtilityDrawer(){
   setupUtilityDrawer();
@@ -1327,11 +1456,30 @@ window.openModal=function(key){
   else if(!tasks.length){badge.textContent='NO LOG';badge.className='modal-status-badge badge-open';}
   else{const st=dayStatus(key);badge.textContent=st==='good'?'GOOD DAY':'WASTED';badge.className=`modal-status-badge ${st==='good'?'badge-good':'badge-bad'}`;}
   document.getElementById('noteInput').value=(state.notes&&state.notes[key])||'';
+  const diaryContent=getDiaryContentByKey(key);
+  const diaryInput=document.getElementById('diaryInput');
+  if(diaryInput){
+    diaryInput.value=diaryContent||'';
+  }
   renderTaskList();
   document.getElementById('modalOverlay').classList.add('open');
   document.getElementById('newTaskInput').focus();
 };
-function closeModal(){ document.getElementById('modalOverlay').classList.remove('open'); activeKey=null; }
+function closeModal(){ 
+  if(activeKey){
+    const diaryInput=document.getElementById('diaryInput');
+    if(diaryInput){
+      ensureUtilityState();
+      state.diaryEntries=state.diaryEntries||{};
+      const content=(diaryInput.value||'').trim();
+      if(content) state.diaryEntries[activeKey]=content.slice(0,1000);
+      else delete state.diaryEntries[activeKey];
+      persist();
+    }
+  }
+  document.getElementById('modalOverlay').classList.remove('open'); 
+  activeKey=null; 
+}
 
 function renderTaskList(){
   if(!activeKey) return;
@@ -1462,6 +1610,15 @@ document.getElementById('noteInput').addEventListener('blur',()=>{
   const val=document.getElementById('noteInput').value.trim();
   if(val) state.notes[activeKey]=val; else delete state.notes[activeKey];
   persist(); renderCalendar();
+});
+document.getElementById('diaryInput').addEventListener('blur',()=>{
+  if(!activeKey) return;
+  ensureUtilityState();
+  state.diaryEntries=state.diaryEntries||{};
+  const val=(document.getElementById('diaryInput').value||'').trim();
+  if(val) state.diaryEntries[activeKey]=val.slice(0,1000);
+  else delete state.diaryEntries[activeKey];
+  persist();
 });
 document.getElementById('editTaskTimePicker').addEventListener('change',e=>{
   if(editingTimeTaskIndex===null||!activeKey||!state.tasks[activeKey]) return;
@@ -1853,11 +2010,56 @@ function updateSettingsUI(){
 window.setPreset=function(v){ state.threshold=v; persist(); updateSettingsUI(); renderCalendar(); };
 document.getElementById('thresholdSlider').addEventListener('input',e=>{ state.threshold=parseInt(e.target.value); persist(); updateSettingsUI(); renderCalendar(); });
 
+function openDiaryBookModal(){
+  const overlay=document.getElementById('diaryModalOverlay');
+  const dateInput=document.getElementById('diaryModalDateInput');
+  if(dateInput) dateInput.value='';
+  renderDiaryBookModal();
+  if(overlay) overlay.classList.add('open');
+}
+function renderDiaryBookModal(filterKey=''){
+  const wrapper=document.getElementById('diaryPagesWrapper');
+  const indicator=document.getElementById('diaryModalIndicator');
+  if(!wrapper||!indicator) return;
+  let entries=collectDiaryEntries();
+  if(filterKey) entries=entries.filter(e=>e.key===filterKey);
+  const pages=buildDiaryBookPages(entries);
+  if(!pages.length){
+    wrapper.innerHTML='<div style="grid-column:1/-1;text-align:center;padding:40px 20px;color:var(--muted2);">No diary entry found for this date.</div>';
+    indicator.textContent='';
+  } else {
+    wrapper.innerHTML=pages.map(p=>{
+      const e0=p[0], e1=p[1];
+      const page0=!e0?'<div class="diary-page-modal"><div class="diary-page-content-modal diary-page-empty-modal">This day is unwritten...</div></div>':`<div class="diary-page-modal"><div class="diary-page-date-modal">${formatDiaryDate(e0.date)}</div><div class="diary-page-content-modal">${escHtml(e0.content)}</div></div>`;
+      const page1=!e1?'<div class="diary-page-modal"><div class="diary-page-content-modal diary-page-empty-modal">This day is unwritten...</div></div>':`<div class="diary-page-modal"><div class="diary-page-date-modal">${formatDiaryDate(e1.date)}</div><div class="diary-page-content-modal">${escHtml(e1.content)}</div></div>`;
+      return page0+page1;
+    }).join('');
+    indicator.textContent=filterKey?'1 result':`${pages.length} page${pages.length!==1?'s':''}`;
+  }
+}
+function closeDiaryBookModal(){
+  const overlay=document.getElementById('diaryModalOverlay');
+  if(overlay) overlay.classList.remove('open');
+}
+
 // ── EVENTS ─────────────────────────────────────────────────────
 document.getElementById('closeBtn').addEventListener('click',closeModal);
+document.getElementById('diaryModalClose').addEventListener('click',closeDiaryBookModal);
+document.getElementById('diaryModalOverlay').addEventListener('click',e=>{ if(e.target===document.getElementById('diaryModalOverlay'))closeDiaryBookModal(); });
+document.getElementById('diaryModalSearchBtn').addEventListener('click',()=>{
+  const input=document.getElementById('diaryModalDateInput');
+  const raw=(input?.value||'').trim();
+  if(!raw){
+    renderDiaryBookModal();
+    return;
+  }
+  const [y,m,d]=raw.split('-').map(Number);
+  if(!y||!m||!d) return;
+  renderDiaryBookModal(toKey(y,m-1,d));
+});
 document.getElementById('modalOverlay').addEventListener('click',e=>{ if(e.target===document.getElementById('modalOverlay'))closeModal(); });
 document.getElementById('cfOverlay').addEventListener('click',e=>{ if(e.target===document.getElementById('cfOverlay'))closeCF(); });
-document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeModal();closeCF();} });
+document.addEventListener('keydown',e=>{ if(e.key==='Escape'){closeModal();closeCF();closeDiaryBookModal();} });
 document.getElementById('prevBtn').addEventListener('click',()=>{ if(--viewMonth<0){viewMonth=11;viewYear--;} renderCalendar(); });
 document.getElementById('nextBtn').addEventListener('click',()=>{ if(++viewMonth>11){viewMonth=0;viewYear++;} renderCalendar(); });
 document.getElementById('settingsBtn').addEventListener('click',e=>{ e.stopPropagation(); document.getElementById('settingsPanel').classList.toggle('open'); });
