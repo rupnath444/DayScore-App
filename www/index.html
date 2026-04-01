@@ -95,6 +95,8 @@ header{display:flex;flex-direction:column;align-items:center;padding:12px 16px 1
 .sync-dot.error{background:var(--red);}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
 .sync-text{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);letter-spacing:.3px;}
+.offline-banner{display:none;margin-top:4px;padding:6px 10px;border-radius:8px;background:var(--yellow-bg);border:1px solid var(--yellow);color:var(--yellow);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.3px;}
+.offline-banner.show{display:block;}
 .signout-btn{background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);border-radius:6px;padding:6px 12px;cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.5px;transition:all .15s;}
 .signout-btn:hover{background:var(--red);border-color:var(--red);color:#fff;}
 
@@ -491,6 +493,7 @@ header{display:flex;flex-direction:column;align-items:center;padding:12px 16px 1
     <div class="sync-dot" id="syncDot"></div>
     <span class="sync-text" id="syncText">synced</span>
   </div>
+  <div class="offline-banner" id="offlineBanner">Offline mode, syncing later</div>
 </header>
 <div class="dashboard-wrap">
   <div class="dashboard-card">
@@ -609,6 +612,12 @@ header{display:flex;flex-direction:column;align-items:center;padding:12px 16px 1
   </div>
   <div class="settings-divider"></div>
   <div class="settings-section">
+    <div class="settings-label">REMINDERS</div>
+    <button class="reminder-test-btn" id="reminderTestBtn">Send Test Reminder</button>
+    <div class="settings-note" id="reminderDiag">Reminder status: checking...</div>
+  </div>
+  <div class="settings-divider"></div>
+  <div class="settings-section">
     <div class="settings-account-row">
       <span class="settings-email" id="settingsUserEmail">Not signed in</span>
       <button class="signout-btn" id="signOutBtn">Sign out</button>
@@ -698,7 +707,7 @@ import {
   onAuthStateChanged, setPersistence, indexedDBLocalPersistence
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import {
-  getFirestore, doc, getDoc, setDoc, enableIndexedDbPersistence
+  getFirestore, doc, getDoc, getDocFromServer, setDoc, enableIndexedDbPersistence
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js';
 
 // ── SINGLE FIREBASE CONFIG — used everywhere ───────────────────
@@ -739,11 +748,24 @@ try { await enableIndexedDbPersistence(db); } catch(e) {}
 // Detect platform
 const isAndroid = /Android/i.test(navigator.userAgent);
 const isNative  = typeof window.Capacitor !== 'undefined';
+// Release-mode switch:
+// - Native (Capacitor) builds: native-only behavior
+// - Browser runs: browser fallback behavior for fast development/testing
+const IS_RELEASE_BUILD = isNative;
+const ALLOW_BROWSER_FALLBACK = !IS_RELEASE_BUILD;
 
 // ── STATE ──────────────────────────────────────────────────────
 const THEME_KEY = 'dayscore_theme';
 const CF_KEY    = 'dayscore_cf_date';
-let state = { tasks:{}, notes:{}, threshold:50, utility:{goalTarget:'2027-02-01',goalName:'Days until GATE 2027',goalNote:'',pomoMinutes:25}, diary:{} };
+const LOCAL_LAST_UID_KEY = 'dayscore_last_uid';
+const LOCAL_STATE_PREFIX = 'dayscore_local_state_';
+const LOCAL_LAST_STATE_KEY = 'dayscore_local_state_last';
+const LOCAL_OUTBOX_PREFIX = 'dayscore_outbox_';
+const LOCAL_SYNCLOG_PREFIX = 'dayscore_sync_log_';
+const LOCAL_QUEUE_LIMIT = 80;
+const LOCAL_SYNC_LOG_LIMIT = 120;
+
+let state = { tasks:{}, notes:{}, threshold:50, utility:{goalTarget:'2027-02-01',goalName:'Days until GATE 2027',goalNote:'',pomoMinutes:25}, diary:{}, updatedAt:0 };
 let currentUser = null;
 let saveTimer   = null;
 let reminderSyncTimer = null;
@@ -753,6 +775,14 @@ let editingTimeTaskIndex = null;
 let pomoTimer = null;
 let diarySaveTimer = null;
 let goalNoteSaveTimer = null;
+let outboxWorkerTimer = null;
+let syncRetryCount = 0;
+let explicitSignOut = false;
+let offlineMode = false;
+let lastForegroundRefreshAt = 0;
+let lastKnownUid = localStorage.getItem(LOCAL_LAST_UID_KEY)||'';
+let cloudReachable = true;
+let lastCloudCheckAt = 0;
 
 const REMINDER_TRACKED_IDS_KEY = 'dayscore_native_reminder_ids';
 const REMINDER_TRACKED_PAYLOADS_KEY = 'dayscore_native_reminder_payloads';
@@ -766,6 +796,206 @@ const POMO_RUNNING_KEY = 'dayscore_pomo_running';
 const POMO_DURATION_KEY = 'dayscore_pomo_duration';
 
 function getThreshold(){ return (state.threshold||50)/100; }
+
+function nowTs(){ return Date.now(); }
+function stateUpdatedAt(s){ return Number(s?.updatedAt||0); }
+function getActiveUidForLocal(){ return currentUser?.uid || lastKnownUid || ''; }
+function localStateKey(uid){ return `${LOCAL_STATE_PREFIX}${uid}`; }
+function localOutboxKey(uid){ return `${LOCAL_OUTBOX_PREFIX}${uid}`; }
+function localSyncLogKey(uid){ return `${LOCAL_SYNCLOG_PREFIX}${uid}`; }
+function snapshotState(){ return JSON.parse(JSON.stringify(state)); }
+
+function setOfflineBanner(show, msg='Offline mode, syncing later'){
+  const el = document.getElementById('offlineBanner');
+  if(!el) return;
+  el.textContent = msg;
+  el.classList.toggle('show', !!show);
+}
+
+function normalizeStateShape(raw){
+  const base = {tasks:{},notes:{},threshold:50,utility:{goalTarget:'2027-02-01',goalName:'Days until GATE 2027',goalNote:'',pomoMinutes:25},diary:{},diaryEntries:{},updatedAt:0};
+  const merged = Object.assign(base, raw||{});
+  if(!merged.utility||typeof merged.utility!=='object') merged.utility={goalTarget:'2027-02-01',goalName:'Days until GATE 2027',goalNote:'',pomoMinutes:25};
+  if(!merged.tasks||typeof merged.tasks!=='object') merged.tasks={};
+  if(!merged.notes||typeof merged.notes!=='object') merged.notes={};
+  if(!merged.diary||typeof merged.diary!=='object') merged.diary={};
+  if(!merged.diaryEntries||typeof merged.diaryEntries!=='object') merged.diaryEntries={};
+  if(!merged.utility.goalTarget) merged.utility.goalTarget='2027-02-01';
+  if(!merged.utility.goalName) merged.utility.goalName='Days until GATE 2027';
+  if(typeof merged.utility.goalNote!=='string') merged.utility.goalNote='';
+  if(!merged.utility.pomoMinutes||merged.utility.pomoMinutes<1) merged.utility.pomoMinutes=25;
+  merged.updatedAt = stateUpdatedAt(merged);
+  return merged;
+}
+
+function writeLocalState(uid, sourceState){
+  const normalized = normalizeStateShape(sourceState);
+  const savedAt = nowTs();
+  if(uid){
+    localStorage.setItem(localStateKey(uid), JSON.stringify({state:normalized, savedAt}));
+  }
+  localStorage.setItem(LOCAL_LAST_STATE_KEY, JSON.stringify({uid:uid||'', state:normalized, savedAt}));
+}
+
+function readLocalState(uid){
+  if(!uid) return null;
+  try{
+    const raw = localStorage.getItem(localStateKey(uid));
+    if(!raw) return null;
+    const parsed = JSON.parse(raw);
+    return normalizeStateShape(parsed?.state||null);
+  }catch(_e){
+    return null;
+  }
+}
+
+function readLastLocalState(preferredUid=''){
+  try{
+    const raw = localStorage.getItem(LOCAL_LAST_STATE_KEY);
+    if(!raw) return null;
+    const parsed = JSON.parse(raw);
+    const stateObj = normalizeStateShape(parsed?.state||null);
+    const uid = String(parsed?.uid||'');
+    if(preferredUid && uid && preferredUid!==uid) return null;
+    return {uid, state:stateObj};
+  }catch(_e){
+    return null;
+  }
+}
+
+function readOutbox(uid){
+  if(!uid) return [];
+  try{
+    const raw = localStorage.getItem(localOutboxKey(uid));
+    if(!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed)?parsed:[];
+  }catch(_e){
+    return [];
+  }
+}
+
+function writeOutbox(uid, queue){
+  if(!uid) return;
+  const safe = Array.isArray(queue)?queue.slice(-LOCAL_QUEUE_LIMIT):[];
+  localStorage.setItem(localOutboxKey(uid), JSON.stringify(safe));
+}
+
+function appendSyncLog(uid, level, message){
+  if(!uid) return;
+  try{
+    const raw = localStorage.getItem(localSyncLogKey(uid));
+    const arr = raw?JSON.parse(raw):[];
+    const next = Array.isArray(arr)?arr:[];
+    next.push({ts:nowTs(),level,message});
+    localStorage.setItem(localSyncLogKey(uid), JSON.stringify(next.slice(-LOCAL_SYNC_LOG_LIMIT)));
+  }catch(_e){}
+}
+
+function enqueueOutboxSnapshot(uid, sourceState){
+  if(!uid) return;
+  const queue = readOutbox(uid);
+  const payload = normalizeStateShape(sourceState);
+  const item = {id:`${nowTs()}-${Math.floor(Math.random()*1000)}`, updatedAt:stateUpdatedAt(payload), state:payload};
+  const last = queue[queue.length-1];
+  if(last && nowTs() - Number(last?.updatedAt||0) < 1200){
+    queue[queue.length-1] = item;
+  } else {
+    queue.push(item);
+  }
+  writeOutbox(uid, queue);
+}
+
+function getBackoffDelayMs(attempt){
+  const base = 1200;
+  const max = 60000;
+  const exp = Math.min(max, base * Math.pow(2, Math.max(0, attempt)));
+  const jitter = 0.7 + Math.random()*0.6;
+  return Math.floor(exp * jitter);
+}
+
+function scheduleOutboxWorker(delayMs=0){
+  clearTimeout(outboxWorkerTimer);
+  outboxWorkerTimer = setTimeout(()=>{ processOutbox().catch(()=>{}); }, Math.max(0, delayMs));
+}
+
+async function checkCloudReachability(uid, force=false){
+  if(!uid||!currentUser) return false;
+  const now = nowTs();
+  if(!force && (now - lastCloudCheckAt) < 5000) return cloudReachable;
+  lastCloudCheckAt = now;
+  try{
+    await getDocFromServer(doc(db,'users',uid));
+    cloudReachable = true;
+    return true;
+  }catch(_e){
+    cloudReachable = false;
+    return false;
+  }
+}
+
+async function processOutbox(){
+  const uid = getActiveUidForLocal();
+  if(!uid) return;
+  const queue = readOutbox(uid);
+  if(!queue.length){
+    syncRetryCount = 0;
+    if(!offlineMode && navigator.onLine) setOfflineBanner(false);
+    return;
+  }
+
+  if(!navigator.onLine){
+    setOfflineBanner(true,'Offline mode, syncing later');
+    setSyncStatus('error','Offline mode · changes saved locally');
+    scheduleOutboxWorker(getBackoffDelayMs(syncRetryCount++));
+    return;
+  }
+
+  if(!currentUser){
+    setOfflineBanner(true,'Offline mode (auth unavailable), syncing later');
+    setSyncStatus('error','Auth unavailable · changes saved locally');
+    scheduleOutboxWorker(getBackoffDelayMs(syncRetryCount++));
+    return;
+  }
+
+  const cloudOk = await checkCloudReachability(uid, syncRetryCount>0);
+  if(!cloudOk){
+    appendSyncLog(uid,'error','cloud-unreachable');
+    setOfflineBanner(true,'Cloud offline, syncing later');
+    setSyncStatus('error','Cloud offline · changes saved locally');
+    scheduleOutboxWorker(getBackoffDelayMs(syncRetryCount++));
+    return;
+  }
+
+  try{
+    setSyncStatus('syncing',`Syncing ${queue.length} pending change${queue.length===1?'':'s'}...`);
+    const next = queue[0];
+    await setDoc(doc(db,'users',uid), next.state);
+    queue.shift();
+    writeOutbox(uid, queue);
+    syncRetryCount = 0;
+    if(queue.length){
+      setOfflineBanner(true,'Syncing pending changes...');
+      scheduleOutboxWorker(200);
+    } else {
+      setOfflineBanner(false);
+      setSyncStatus('synced','Saved · '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
+    }
+  }catch(e){
+    appendSyncLog(uid,'error',`sync-failed:${e?.code||'unknown'}`);
+    setOfflineBanner(true,'Cloud unavailable, syncing later');
+    setSyncStatus('error','Cloud unavailable · changes saved locally');
+    scheduleOutboxWorker(getBackoffDelayMs(syncRetryCount++));
+  }
+}
+
+window.addEventListener('online',()=>{
+  setOfflineBanner(false);
+  scheduleOutboxWorker(150);
+});
+window.addEventListener('offline',()=>{
+  setOfflineBanner(true,'Offline mode, syncing later');
+});
 
 // ── THEME ──────────────────────────────────────────────────────
 function initTheme(){ applyTheme(localStorage.getItem(THEME_KEY)||'dark'); }
@@ -868,6 +1098,10 @@ async function emailRegister(){
 
 document.getElementById('signOutBtn').addEventListener('click', async ()=>{
   if(confirm('Sign out of DayScore?')){
+    explicitSignOut = true;
+    offlineMode = false;
+    lastKnownUid = '';
+    localStorage.removeItem(LOCAL_LAST_UID_KEY);
     await clearNativeReminderTracking();
     await signOut(auth);
   }
@@ -880,10 +1114,19 @@ onAuthStateChanged(auth, async (user)=>{
   const main    = document.getElementById('mainApp');
 
   if(user){
+    explicitSignOut = false;
+    offlineMode = false;
     currentUser = user;
+    lastKnownUid = user.uid;
+    localStorage.setItem(LOCAL_LAST_UID_KEY, user.uid);
     document.getElementById('loadingSub').textContent = 'loading your data…';
     document.getElementById('settingsUserEmail').textContent = user.email || 'No email';
     setSyncStatus('syncing',`Connected to ${firebaseConfig.projectId} · loading data…`);
+
+    const local = readLocalState(user.uid);
+    const lastLocal = readLastLocalState(user.uid);
+    if(local) state = normalizeStateShape(local);
+    else if(lastLocal?.state) state = normalizeStateShape(lastLocal.state);
 
     await loadFromFirebase();
     updateSettingsUI();
@@ -897,12 +1140,36 @@ onAuthStateChanged(auth, async (user)=>{
     loading.classList.add('hidden');
     login.classList.add('hidden');
     main.style.display = 'flex';
+    setOfflineBanner(false);
+    scheduleOutboxWorker(150);
 
   } else {
+    currentUser = null;
+    if(!explicitSignOut && lastKnownUid){
+      const local = readLocalState(lastKnownUid);
+      const fallback = readLastLocalState(lastKnownUid);
+      const cachedState = local || fallback?.state || null;
+      if(cachedState){
+        offlineMode = true;
+        state = normalizeStateShape(cachedState);
+        document.getElementById('settingsUserEmail').textContent = 'Offline (cached session)';
+        setSyncStatus('error','Offline mode · local data only');
+        setOfflineBanner(true,'Offline mode (auth unavailable), syncing later');
+        updateSettingsUI();
+        renderCalendar();
+        renderUtilityDrawer();
+        loading.classList.add('hidden');
+        login.classList.add('hidden');
+        main.style.display = 'flex';
+        return;
+      }
+    }
+
     currentUser = null;
     await clearNativeReminderTracking();
     setReminderDiag('Reminder status: sign in required');
     document.getElementById('settingsUserEmail').textContent = 'Not signed in';
+    setOfflineBanner(false);
     loading.classList.add('hidden');
     login.classList.remove('hidden');
     main.style.display = 'none';
@@ -917,44 +1184,85 @@ function setSyncStatus(s,t){
 }
 
 async function loadFromFirebase(){
-  if(!currentUser) return;
-  setSyncStatus('syncing',`Loading your data (${firebaseConfig.projectId})…`);
+  const uid = currentUser?.uid || lastKnownUid;
+  if(!uid) return;
+  const local = readLocalState(uid);
+  const fallback = readLastLocalState(uid);
+  const cachedState = local || fallback?.state || null;
+  if(cachedState){
+    state = normalizeStateShape(cachedState);
+  }
+
+  if(!currentUser){
+    setSyncStatus('error','Offline mode · local data only');
+    setOfflineBanner(true,'Offline mode, syncing later');
+    return;
+  }
+
+  setSyncStatus('syncing',`Loading your data (${firebaseConfig.projectId})...`);
   try {
     const snap = await getDoc(doc(db,'users',currentUser.uid));
+    const remoteState = snap.exists() ? normalizeStateShape(snap.data()) : null;
+    const localState = cachedState ? normalizeStateShape(cachedState) : null;
+
+    if(remoteState && localState){
+      const outbox = readOutbox(uid);
+      if(outbox.length > 0){
+        state = localState;
+        setOfflineBanner(true,'Recovered offline changes, syncing...');
+        appendSyncLog(uid,'warn','local-priority-outbox-exists');
+      } else if(stateUpdatedAt(localState) > stateUpdatedAt(remoteState)){
+        state = localState;
+        enqueueOutboxSnapshot(uid, state);
+        setOfflineBanner(true,'Recovered local changes, syncing...');
+        appendSyncLog(uid,'warn','local-newer-than-remote');
+      } else {
+        state = remoteState;
+      }
+    } else if(remoteState){
+      state = remoteState;
+    } else if(localState){
+      state = localState;
+      if(readOutbox(uid).length===0) enqueueOutboxSnapshot(uid, state);
+      setOfflineBanner(true,'Using local data, sync pending');
+    }
+
+    writeLocalState(uid, state);
+
     if(snap.exists()){
-      state = Object.assign({tasks:{},notes:{},threshold:50,utility:{goalTarget:'2027-02-01',goalName:'Days until GATE 2027',goalNote:'',pomoMinutes:25},diary:{}}, snap.data());
-      if(!state.utility||typeof state.utility!=='object') state.utility={goalTarget:'2027-02-01',goalName:'Days until GATE 2027',goalNote:'',pomoMinutes:25};
-      if(!state.utility.goalTarget) state.utility.goalTarget='2027-02-01';
-      if(!state.utility.goalName) state.utility.goalName='Days until GATE 2027';
-      if(typeof state.utility.goalNote!=='string') state.utility.goalNote='';
-      if(!state.utility.pomoMinutes||state.utility.pomoMinutes<1) state.utility.pomoMinutes=25;
-      if(!state.diary||typeof state.diary!=='object') state.diary={};
       queueReminderSync();
+      scheduleOutboxWorker(200);
       setSyncStatus('synced','Synced · '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
     } else {
       queueReminderSync();
-      setSyncStatus('synced','Ready — start adding tasks!');
+      scheduleOutboxWorker(200);
+      setSyncStatus('synced','Ready — local-first mode active');
     }
   } catch(e){
-    setSyncStatus('error','Could not load data');
+    setSyncStatus('error','Could not load cloud data, using local');
+    setOfflineBanner(true,'Cloud unavailable, using local data');
+    appendSyncLog(uid,'error',`load-failed:${e?.code||'unknown'}`);
+    if(cachedState){
+      state = normalizeStateShape(cachedState);
+    }
     console.error('Load error:',e);
   }
 }
 
 async function saveToFirebase(){
-  if(!currentUser) return;
-  setSyncStatus('syncing','Saving…');
-  try {
-    await setDoc(doc(db,'users',currentUser.uid), state);
-    setSyncStatus('synced','Saved · '+new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}));
-  } catch(e){
-    setSyncStatus('error','Save failed');
-    console.error('Save error:',e);
-  }
+  scheduleOutboxWorker(0);
 }
 
-function scheduleSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveToFirebase,1500); }
-function persist(){ scheduleSave(); }
+function scheduleSave(){ clearTimeout(saveTimer); saveTimer = setTimeout(saveToFirebase,700); }
+function persist(){
+  const uid = getActiveUidForLocal();
+  state.updatedAt = nowTs();
+  if(uid){
+    writeLocalState(uid, state);
+    enqueueOutboxSnapshot(uid, state);
+  }
+  scheduleSave();
+}
 
 // ── DATE HELPERS ───────────────────────────────────────────────
 let viewYear, viewMonth;
@@ -1692,10 +2000,10 @@ async function refreshReminderDiagnostics(){
     }
     return;
   }
-  if('Notification' in window){
+  if(ALLOW_BROWSER_FALLBACK && 'Notification' in window){
     setReminderDiag(`Web reminders: ${Notification.permission}`);
   } else {
-    setReminderDiag('This device/browser does not support notifications');
+    setReminderDiag('Native reminders unavailable on this build');
   }
 }
 async function initNativeReminderListeners(){
@@ -1934,7 +2242,7 @@ async function requestNotifPermission(){
     await ensureNativeReminderReady(true);
     return;
   }
-  if('Notification' in window && Notification.permission==='default') Notification.requestPermission();
+  if(ALLOW_BROWSER_FALLBACK && 'Notification' in window && Notification.permission==='default') Notification.requestPermission();
 }
 async function sendReminderTestNotification(){
   if(canUseNativeReminders()){
@@ -1975,14 +2283,16 @@ async function sendReminderTestNotification(){
     }
     return;
   }
-  if('Notification' in window){
+  if(ALLOW_BROWSER_FALLBACK && 'Notification' in window){
     if(Notification.permission!=='granted') await Notification.requestPermission();
     if(Notification.permission==='granted') new Notification('DayScore Test',{body:'Browser reminder path is working.'});
     refreshReminderDiagnostics();
+    return;
   }
+  alert('Native reminder plugin not available in this release build.');
 }
 function checkDueNotifications(){
-  if(canUseNativeReminders()) return;
+  if(canUseNativeReminders() || !ALLOW_BROWSER_FALLBACK) return;
   if(!('Notification'in window)||Notification.permission!=='granted') return;
   const t=today(), key=toKey(t.y,t.m,t.d);
   const tasks=state.tasks[key]||[];
@@ -2062,6 +2372,7 @@ document.getElementById('prevBtn').addEventListener('click',()=>{ if(--viewMonth
 document.getElementById('nextBtn').addEventListener('click',()=>{ if(++viewMonth>11){viewMonth=0;viewYear++;} renderCalendar(); });
 document.getElementById('settingsBtn').addEventListener('click',e=>{ e.stopPropagation(); document.getElementById('settingsPanel').classList.toggle('open'); });
 document.getElementById('settingsBtn').addEventListener('click',()=>{ refreshReminderDiagnostics(); });
+document.getElementById('reminderTestBtn').addEventListener('click',()=>{ sendReminderTestNotification().catch(()=>{}); });
 document.addEventListener('click',e=>{ const p=document.getElementById('settingsPanel'); if(!p.contains(e.target)&&!e.target.closest('#settingsBtn'))p.classList.remove('open'); });
 document.getElementById('quickAddBtn').addEventListener('click',()=>{
   const t=today();
@@ -2071,6 +2382,9 @@ document.getElementById('quickAddBtn').addEventListener('click',()=>{
 // Reload when app comes back to foreground
 document.addEventListener('visibilitychange',()=>{
   if(document.visibilityState==='visible'&&currentUser){
+    const now = nowTs();
+    if(now - lastForegroundRefreshAt < 5000) return;
+    lastForegroundRefreshAt = now;
     loadFromFirebase().then(()=>{ renderCalendar(); queueReminderSync(); renderUtilityDrawer(); });
   }
 });
