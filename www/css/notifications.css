@@ -1,0 +1,22 @@
+/* SETTINGS */
+.settings-panel{position:fixed;top:64px;right:16px;width:300px;background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:18px;z-index:200;box-shadow:0 8px 40px var(--shadow);display:none;max-height:80vh;overflow-y:auto;}
+.settings-panel.open{display:block;}
+.settings-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--text);margin-bottom:14px;}
+.settings-section{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}
+.settings-section:last-child{margin-bottom:0;}
+.settings-label{font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:.5px;}
+.threshold-display{display:flex;align-items:center;justify-content:space-between;}
+.threshold-val{font-family:'Bebas Neue',sans-serif;font-size:30px;color:var(--accent);line-height:1;}
+.threshold-desc{font-size:10px;color:var(--muted2);font-family:'DM Mono',monospace;line-height:1.5;}
+.threshold-slider{width:100%;accent-color:var(--accent);cursor:pointer;}
+.preset-btns{display:flex;gap:5px;flex-wrap:wrap;}
+.preset-btn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:6px;padding:4px 9px;font-family:'DM Mono',monospace;font-size:10px;cursor:pointer;transition:all .15s;}
+.preset-btn:hover,.preset-btn.active{background:var(--accent-bg);border-color:var(--accent);color:var(--accent);}
+.settings-divider{height:1px;background:var(--border);margin:2px 0;}
+.settings-note{font-size:9px;color:var(--muted2);font-family:'DM Mono',monospace;line-height:1.6;}
+.url-save-btn{background:var(--accent-bg);border:1px solid var(--accent);color:var(--accent);border-radius:8px;padding:7px 14px;cursor:pointer;font-family:'DM Mono',monospace;font-size:11px;transition:all .15s;align-self:flex-start;}
+.url-save-btn:hover{background:var(--accent);color:#fff;}
+.settings-account-row{display:flex;align-items:center;justify-content:space-between;gap:10px;}
+.settings-email{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted);padding:5px 8px;border:1px solid var(--border);border-radius:6px;background:var(--surface2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:170px;}
+.reminder-test-btn{background:var(--surface2);border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:8px 10px;cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;transition:all .15s;}
+.reminder-test-btn:hover{background:var(--accent-bg);border-color:var(--accent);color:var(--accent);}

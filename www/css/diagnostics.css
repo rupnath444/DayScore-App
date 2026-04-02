@@ -1,0 +1,11 @@
+/* SYNC INDICATOR */
+.sync-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;background:var(--muted2);transition:background .3s;}
+.sync-dot.syncing{background:var(--yellow);animation:pulse 1s infinite;}
+.sync-dot.synced{background:var(--green);}
+.sync-dot.error{background:var(--red);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.sync-text{font-family:'DM Mono',monospace;font-size:10px;color:var(--muted2);letter-spacing:.3px;}
+.offline-banner{display:none;margin-top:4px;padding:6px 10px;border-radius:8px;background:var(--yellow-bg);border:1px solid var(--yellow);color:var(--yellow);font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.3px;}
+.offline-banner.show{display:block;}
+.signout-btn{background:var(--red-bg);border:1px solid var(--red-border);color:var(--red);border-radius:6px;padding:6px 12px;cursor:pointer;font-family:'DM Mono',monospace;font-size:10px;letter-spacing:.5px;transition:all .15s;}
+.signout-btn:hover{background:var(--red);border-color:var(--red);color:#fff;}
