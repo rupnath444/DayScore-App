@@ -3,7 +3,8 @@ import {
   getAuth, GoogleAuthProvider,
   signInWithPopup, signInWithEmailAndPassword,
   createUserWithEmailAndPassword, signOut,
-  onAuthStateChanged, setPersistence, indexedDBLocalPersistence
+  onAuthStateChanged, setPersistence, indexedDBLocalPersistence,
+  browserLocalPersistence, inMemoryPersistence
 } from 'https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js';
 import {
   getFirestore, doc, getDoc, getDocFromServer, setDoc, enableIndexedDbPersistence
@@ -21,6 +22,7 @@ import {
   LOCAL_SYNC_LOG_LIMIT,
   REMINDER_TRACKED_IDS_KEY,
   REMINDER_TRACKED_PAYLOADS_KEY,
+  REMINDER_OVERDUE_MARKS_KEY,
   REMINDER_CHANNEL_ID,
   LEGACY_REMINDER_CHANNEL_ID,
   REMINDER_ACTION_TYPE_ID,
@@ -49,8 +51,18 @@ if(prevProject && prevProject !== firebaseConfig.projectId){
 }
 localStorage.setItem(PROJECT_MARKER_KEY, firebaseConfig.projectId);
 
-// Use IndexedDB for persistence — survives Android RAM clears
-await setPersistence(auth, indexedDBLocalPersistence);
+// Prefer durable auth persistence, but gracefully fall back if WebView blocks IndexedDB.
+try {
+  await setPersistence(auth, indexedDBLocalPersistence);
+} catch (idbErr) {
+  console.warn('Auth IndexedDB persistence unavailable, falling back to local persistence:', idbErr);
+  try {
+    await setPersistence(auth, browserLocalPersistence);
+  } catch (localErr) {
+    console.warn('Auth local persistence unavailable, falling back to memory persistence:', localErr);
+    await setPersistence(auth, inMemoryPersistence);
+  }
+}
 
 // Firestore offline cache
 try { await enableIndexedDbPersistence(db); } catch(e) {}
@@ -69,6 +81,8 @@ let saveTimer   = null;
 let reminderSyncTimer = null;
 let reminderListenerBound = false;
 let reminderChannelReady = false;
+let reminderExactAllowed = true;
+const REMINDER_RECENT_CATCHUP_MS = 2 * 60 * 1000;
 let editingTimeTaskIndex = null;
 let pomoTimer = null;
 let diarySaveTimer = null;
@@ -1270,14 +1284,16 @@ function launchConfetti(){
 function canUseNativeReminders(){
   const cap=window.Capacitor;
   if(!cap) return false;
-  let platform='';
-  try{ platform=String(cap.getPlatform?.()||'').toLowerCase(); }catch(_e){}
-  const nativeOk=typeof cap.isNativePlatform==='function' ? !!cap.isNativePlatform() : true;
-  const androidLike=/Android/i.test(navigator.userAgent) || platform==='android';
-  return !!(androidLike && nativeOk && cap.Plugins && cap.Plugins.LocalNotifications);
+  const pluginReady=!!(cap.Plugins && cap.Plugins.LocalNotifications);
+  if(!pluginReady) return false;
+  if(typeof cap.isNativePlatform==='function' && !cap.isNativePlatform()) return false;
+  return true;
 }
 function getNativeReminderPlugin(){
   return window.Capacitor?.Plugins?.LocalNotifications;
+}
+function getDayScoreReminderPlugin(){
+  return window.Capacitor?.Plugins?.DayScoreReminder;
 }
 function isPermissionGranted(status){
   const value=String(status?.display ?? status?.receive ?? status?.permission ?? status?.value ?? '').toLowerCase();
@@ -1287,7 +1303,146 @@ function setReminderDiag(msg){
   const el=document.getElementById('reminderDiag');
   if(el) el.textContent=msg;
 }
+function setReminderReport(msg){
+  const el=document.getElementById('reminderReport');
+  if(!el) return;
+  el.textContent=msg;
+  el.style.display=msg?'block':'none';
+}
+function formatReminderTime(d){
+  try{
+    return new Intl.DateTimeFormat([], { weekday:'short', month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' }).format(d);
+  }catch(_e){
+    return d.toLocaleString();
+  }
+}
+async function buildReminderSurvey(){
+  const cap=window.Capacitor;
+  const platform=String(cap?.getPlatform?.()||'unknown');
+  const pluginReady=!!(cap?.Plugins?.LocalNotifications);
+  const lines=[];
+  lines.push('DayScore reminder survey');
+  lines.push(`platform: ${platform}`);
+  lines.push(`native runtime: ${typeof cap!=='undefined'?'yes':'no'}`);
+  lines.push(`plugin ready: ${pluginReady?'yes':'no'}`);
+
+  if(!canUseNativeReminders()){
+    lines.push('native reminders: unavailable in this runtime');
+    return lines.join('\n');
+  }
+
+  const LocalNotifications=getNativeReminderPlugin();
+  let permText='unknown';
+  let exactText='unknown';
+  let pendingCount='unknown';
+  let pendingIds=[];
+  let exactAllowed=reminderExactAllowed;
+  try{
+    const perm=await LocalNotifications.checkPermissions();
+    permText=perm.display || perm.receive || perm.permission || perm.state || 'unknown';
+  }catch(_e){}
+  try{
+    if(typeof LocalNotifications.checkExactNotificationSetting==='function'){
+      const exactStatus=await LocalNotifications.checkExactNotificationSetting();
+      exactText=String(exactStatus?.value ?? exactStatus?.exact ?? exactStatus?.exactAlarm ?? exactStatus?.enabled ?? 'unknown');
+      exactAllowed=isExactSettingAllowed(exactText);
+    }
+  }catch(_e){}
+  try{
+    if(typeof LocalNotifications.getPending==='function'){
+      const pending=await LocalNotifications.getPending();
+      pendingIds=(pending?.notifications||[]).map(n=>Number(n?.id)).filter(Number.isFinite);
+      pendingCount=String(pendingIds.length);
+    }
+  }catch(_e){}
+
+  const now=Date.now();
+  const desired=[];
+  Object.keys(state.tasks||{}).forEach(key=>{
+    (state.tasks[key]||[]).forEach(task=>{
+      if(!task.time||task.done) return;
+      const due=parseDueDate(key,task.time);
+      if(!due) return;
+      desired.push({key,task,due,dueMs:due.getTime(),id:reminderIdForTask(key,task)});
+    });
+  });
+
+  const upcoming=desired
+    .filter(item=>item.dueMs>now)
+    .sort((a,b)=>a.dueMs-b.dueMs)
+    .slice(0,5);
+  const overdue=desired.filter(item=>item.dueMs<=now);
+  const pendingSet=new Set(pendingIds);
+  const missingFromOs=desired.filter(item=>pendingIds.length && !pendingSet.has(item.id));
+
+  lines.push(`notification permission: ${permText}`);
+  lines.push(`exact alarms: ${exactText} (${exactAllowed?'allowed':'not allowed'})`);
+  lines.push(`pending OS notifications: ${pendingCount}`);
+  lines.push(`tracked reminder ids: ${JSON.parse(localStorage.getItem(REMINDER_TRACKED_IDS_KEY)||'[]').length}`);
+  lines.push(`timed tasks: ${desired.length}`);
+  lines.push(`overdue timed tasks: ${overdue.length}`);
+  lines.push(`future timed tasks: ${upcoming.length ? upcoming.length : 0}`);
+
+  if(upcoming.length){
+    lines.push('next reminders:');
+    upcoming.forEach(item=>{
+      const deltaMin=Math.round((item.dueMs-now)/60000);
+      lines.push(`- ${item.key} | ${item.task.time} | ${item.task.text || 'Untitled'} | due ${formatReminderTime(item.due)} | in ~${deltaMin}m`);
+    });
+  } else {
+    lines.push('next reminders: none');
+  }
+
+  if(overdue.length){
+    lines.push('overdue tasks:');
+    overdue.slice(0,5).forEach(item=>{
+      const lateMin=Math.round((now-item.dueMs)/60000);
+      lines.push(`- ${item.key} | ${item.task.time} | ${item.task.text || 'Untitled'} | late by ~${lateMin}m`);
+    });
+  }
+
+  if(missingFromOs.length){
+    lines.push('mismatch warning: some desired reminders are not in the OS pending queue');
+    missingFromOs.slice(0,5).forEach(item=>{
+      lines.push(`- missing: ${item.key} | ${item.task.time} | ${item.task.text || 'Untitled'}`);
+    });
+  }
+
+  if(!desired.length){
+    lines.push('note: no timed tasks found, so only test reminders would appear');
+  }
+
+  if(!reminderExactAllowed){
+    lines.push('likely cause: exact alarms are not allowed for this device/app combination');
+  }
+
+  lines.push('');
+  lines.push('Interpretation:');
+  lines.push('- If test reminders work but task reminders do not appear in OS pending, task scheduling is failing before background delivery.');
+  lines.push('- If task reminders are pending but do not show while closed, the device is likely restricting background work (battery saver / Doze / OEM control).');
+  lines.push('- If task reminders are overdue and only appear when the app opens, the device is deferring alarms until foreground resume.');
+
+  return lines.join('\n');
+}
+async function runReminderSurvey(){
+  try{
+    setReminderDiag('Running reminder survey...');
+    const report=await buildReminderSurvey();
+    setReminderReport(report);
+    try{ await navigator.clipboard.writeText(report); }catch(_e){}
+    setReminderDiag('Reminder survey ready and copied if permitted');
+  }catch(e){
+    console.warn('Reminder survey failed:',e);
+    const message='Reminder survey failed to run';
+    setReminderReport(message);
+    setReminderDiag(message);
+  }
+}
 async function refreshReminderDiagnostics(){
+  const cap=window.Capacitor;
+  let platform='unknown';
+  try{ platform=String(cap?.getPlatform?.()||'unknown'); }catch(_e){}
+  const pluginReady=!!(cap?.Plugins?.LocalNotifications);
   if(canUseNativeReminders()){
     try{
       const LocalNotifications=getNativeReminderPlugin();
@@ -1297,16 +1452,22 @@ async function refreshReminderDiagnostics(){
         try{
           const exactStatus=await LocalNotifications.checkExactNotificationSetting();
           exact=String(exactStatus?.value ?? exactStatus?.exact ?? exactStatus?.exactAlarm ?? exactStatus?.enabled ?? 'unknown');
+          reminderExactAllowed=isExactSettingAllowed(exact);
         }catch(_e){}
       }
-      setReminderDiag(`Native reminders: ${perm.display || perm.receive || perm.permission || 'unknown'} | exact: ${exact}`);
+      const reliability=reminderExactAllowed?'background: reliable':'background: limited (enable exact alarms)';
+      setReminderDiag(`Native reminders: ${perm.display || perm.receive || perm.permission || 'unknown'} | exact: ${exact} | ${reliability} | platform: ${platform}`);
     }catch(e){
       setReminderDiag('Native reminders: error reading status');
     }
     return;
   }
-  const hasCap=typeof window.Capacitor!=='undefined';
-  setReminderDiag(hasCap?'Native reminders unavailable (plugin/runtime mismatch)':'Native runtime not ready yet');
+  const hasCap=typeof cap!=='undefined';
+  if(!hasCap){
+    setReminderDiag('Native runtime not ready yet');
+    return;
+  }
+  setReminderDiag(`Native reminders unavailable (plugin: ${pluginReady?'ready':'missing'}, platform: ${platform})`);
 }
 async function initNativeReminderListeners(){
   if(reminderListenerBound||!canUseNativeReminders()) return;
@@ -1323,7 +1484,14 @@ async function initNativeReminderListeners(){
 function isExactSettingAllowed(setting){
   if(setting===undefined||setting===null) return true;
   if(typeof setting==='boolean') return setting;
-  if(typeof setting==='string') return !['denied','disabled','off'].includes(setting.toLowerCase());
+  if(typeof setting==='string'){
+    const raw=setting.toLowerCase().trim();
+    if(['granted','allowed','enabled','exact','on','true','1','not_supported','unsupported','unavailable','unknown','n/a','na'].includes(raw)) return true;
+    if(['denied','disabled','off','false','0','not_allowed','not_granted','exact_alarm_denied'].includes(raw)) return false;
+    if(raw.includes('deny')||raw.includes('disable')||raw.includes('not_allowed')||raw.includes('not granted')) return false;
+    if(raw.includes('allow')||raw.includes('grant')||raw.includes('enable')) return true;
+    return true;
+  }
   return true;
 }
 async function ensureNativeReminderReady(showAlertOnFailure=false){
@@ -1341,8 +1509,14 @@ async function ensureNativeReminderReady(showAlertOnFailure=false){
       try{
         const exactStatus=await LocalNotifications.checkExactNotificationSetting();
         const exactValue=exactStatus?.value ?? exactStatus?.exact ?? exactStatus?.exactAlarm ?? exactStatus?.enabled;
+        reminderExactAllowed=isExactSettingAllowed(exactValue);
         if(!isExactSettingAllowed(exactValue) && typeof LocalNotifications.changeExactNotificationSetting==='function'){
           await LocalNotifications.changeExactNotificationSetting();
+          try{
+            const afterChange=await LocalNotifications.checkExactNotificationSetting();
+            const afterValue=afterChange?.value ?? afterChange?.exact ?? afterChange?.exactAlarm ?? afterChange?.enabled;
+            reminderExactAllowed=isExactSettingAllowed(afterValue);
+          }catch(_e){}
         }
       }catch(_e){}
     }
@@ -1375,6 +1549,9 @@ async function ensureNativeReminderReady(showAlertOnFailure=false){
     }
     await initNativeReminderListeners();
     await refreshReminderDiagnostics();
+    if(!reminderExactAllowed && showAlertOnFailure){
+      alert('Exact alarms are disabled. Task reminders may arrive late while app is closed. Please allow Exact alarms for DayScore in Android settings.');
+    }
     return true;
   }catch(e){
     console.warn('Native reminder permission/setup failed:',e);
@@ -1461,7 +1638,7 @@ async function handleNativeReminderAction(event){
   }
 }
 function parseDueDate(key,time){
-  const m=/^(\d{2}):(\d{2})$/.exec((time||'').trim());
+  const m=/^(\d{1,2}):(\d{1,2})$/.exec((time||'').trim());
   if(!m) return null;
   const hh=Number(m[1]), mm=Number(m[2]);
   if(hh<0||hh>23||mm<0||mm>59) return null;
@@ -1484,9 +1661,6 @@ async function clearNativeReminderTracking(){
 }
 async function syncNativeReminders(){
   if(!canUseNativeReminders()) return;
-  const ready=await ensureNativeReminderReady(false);
-  if(!ready) return;
-  const LocalNotifications=getNativeReminderPlugin();
   const desired=[];
   const now=Date.now();
   Object.keys(state.tasks||{}).forEach(key=>{
@@ -1495,28 +1669,37 @@ async function syncNativeReminders(){
       let due=parseDueDate(key,task.time);
       if(!due) return;
       const dueMs=due.getTime();
-      if(dueMs<=now){
-        // Keep timing strict: skip stale alerts and only allow tiny catch-up drift.
-        if(now-dueMs>15000) return;
-        due=new Date(now+1000);
-      }
+      if(dueMs<=now) return;
       desired.push({
         id:reminderIdForTask(key,task),
         title:'DayScore - Task Due',
         body:(task.text||'Task due now').slice(0,120),
-        channelId:REMINDER_CHANNEL_ID,
-        actionTypeId:REMINDER_ACTION_TYPE_ID,
-        extra:{taskKey:key,taskId:String(task.id)},
-        schedule:{at:due,allowWhileIdle:true}
+        at:due.getTime(),
+        taskKey:key,
+        taskId:String(task.id)
       });
     });
   });
 
+  const nativeBridge=getDayScoreReminderPlugin();
+  if(nativeBridge&&typeof nativeBridge.sync==='function'){
+    try{
+      await nativeBridge.sync({notifications:desired});
+      setSyncStatus('synced',`Scheduled ${desired.length} reminder${desired.length===1?'':'s'}`);
+      return;
+    }catch(e){
+      console.warn('DayScore native reminder sync failed, falling back to LocalNotifications:',e);
+    }
+  }
+
+  const ready=await ensureNativeReminderReady(false);
+  if(!ready) return;
+  const LocalNotifications=getNativeReminderPlugin();
   const trackedIds=JSON.parse(localStorage.getItem(REMINDER_TRACKED_IDS_KEY)||'[]').map(Number).filter(Number.isFinite);
   const trackedPayloads=JSON.parse(localStorage.getItem(REMINDER_TRACKED_PAYLOADS_KEY)||'{}');
   const desiredIds=desired.map(n=>n.id);
   const desiredPayloads={};
-  desired.forEach(n=>{ desiredPayloads[String(n.id)]=`${n.body}|${new Date(n.schedule.at).getTime()}`; });
+  desired.forEach(n=>{ desiredPayloads[String(n.id)]=`${n.body}|${n.at}`; });
 
   let pendingIds=new Set();
   if(typeof LocalNotifications.getPending==='function'){
@@ -1530,7 +1713,7 @@ async function syncNativeReminders(){
   const upsert=desired.filter(n=>{
     const id=Number(n.id);
     const changed=trackedPayloads[String(id)]!==desiredPayloads[String(id)];
-    const missingFromOs=(pendingIds.size>0 && !pendingIds.has(id));
+    const missingFromOs=!pendingIds.has(id);
     const neverTracked=!trackedIds.includes(id);
     return changed||missingFromOs||neverTracked;
   });
@@ -1542,18 +1725,32 @@ async function syncNativeReminders(){
     setSyncStatus('synced','No pending reminders');
     localStorage.setItem(REMINDER_TRACKED_IDS_KEY,JSON.stringify([]));
     localStorage.setItem(REMINDER_TRACKED_PAYLOADS_KEY,JSON.stringify({}));
+    localStorage.removeItem(REMINDER_OVERDUE_MARKS_KEY);
     return;
   }
 
   if(upsert.length){
-    await LocalNotifications.schedule({notifications:upsert});
+    await LocalNotifications.schedule({notifications:upsert.map(n=>({
+      id:n.id,
+      title:n.title,
+      body:n.body,
+      channelId:REMINDER_CHANNEL_ID,
+      actionTypeId:REMINDER_ACTION_TYPE_ID,
+      extra:{taskKey:n.taskKey,taskId:n.taskId},
+      schedule:{at:new Date(n.at),allowWhileIdle:true}
+    }))});
   }
   localStorage.setItem(REMINDER_TRACKED_IDS_KEY,JSON.stringify(desiredIds));
   localStorage.setItem(REMINDER_TRACKED_PAYLOADS_KEY,JSON.stringify(desiredPayloads));
   setSyncStatus('synced',`Scheduled ${desired.length} reminder${desired.length===1?'':'s'}`);
 }
-function queueReminderSync(){
+function queueReminderSync(immediate=false){
   clearTimeout(reminderSyncTimer);
+  if(immediate){
+    syncNativeReminders().catch(e=>console.warn('Native reminder sync failed:',e));
+    refreshReminderDiagnostics();
+    return;
+  }
   reminderSyncTimer=setTimeout(()=>{ syncNativeReminders().catch(e=>console.warn('Native reminder sync failed:',e)); refreshReminderDiagnostics(); },100);
 }
 async function requestNotifPermission(){
@@ -1592,8 +1789,15 @@ async function sendReminderTestNotification(){
           }
         ]
       });
+      let pendingCount='unknown';
+      if(typeof LocalNotifications.getPending==='function'){
+        try{
+          const pending=await LocalNotifications.getPending();
+          pendingCount=String((pending?.notifications||[]).length);
+        }catch(_e){}
+      }
       setReminderDiag('Test queued: one in ~2s and one in ~10s');
-      alert('Test alerts scheduled (~2s and ~10s). Lock screen and watch for banner/sound.');
+      alert(`Test alerts scheduled (~2s and ~10s). Pending in OS queue: ${pendingCount}. Lock screen and watch for banner/sound.`);
     }catch(e){
       console.warn('Test reminder failed:',e);
       setReminderDiag('Test failed: check notification + exact alarm settings');
@@ -1602,6 +1806,56 @@ async function sendReminderTestNotification(){
     return;
   }
   alert('Native reminder plugin not available in this release build.');
+}
+async function sendTaskPathTestNotification(){
+  if(!canUseNativeReminders()){
+    alert('Native reminder plugin not available in this release build.');
+    return;
+  }
+  const ready=await ensureNativeReminderReady(true);
+  if(!ready) return;
+  const LocalNotifications=getNativeReminderPlugin();
+  const now=new Date();
+  const nowKey=toKey(now.getFullYear(),now.getMonth(),now.getDate());
+  const testTask={id:777777001,text:'Task-path test reminder',time:hmFromDate(new Date(Date.now()+20000))};
+  const due=parseDueDate(nowKey,testTask.time);
+  if(!due){
+    alert('Could not create task-path test due time.');
+    return;
+  }
+  const payload={
+    id:reminderIdForTask(nowKey,testTask),
+    title:'DayScore Task Reminder Test',
+    body:'This uses the same path as normal task reminders.',
+    channelId:REMINDER_CHANNEL_ID,
+    actionTypeId:REMINDER_ACTION_TYPE_ID,
+    extra:{taskKey:nowKey,taskId:String(testTask.id),kind:'task-path-test'},
+    schedule:{at:due,allowWhileIdle:true}
+  };
+  try{
+    await LocalNotifications.schedule({notifications:[payload]});
+    let pendingCount='unknown';
+    try{
+      const pending=await LocalNotifications.getPending();
+      pendingCount=String((pending?.notifications||[]).length);
+    }catch(_e){}
+    setReminderDiag(`Task-path test queued for ${formatReminderTime(due)}`);
+    alert(`Task-path test scheduled for ~20s from now. Pending in OS queue: ${pendingCount}. This uses normal task reminder fields.`);
+  }catch(e){
+    console.warn('Task-path test failed:',e);
+    setReminderDiag('Task-path test failed');
+    alert('Task-path test failed. Check exact alarm and app battery restrictions.');
+  }
+}
+async function openAppNotificationSettings(){
+  try{
+    const AppPlugin=window.Capacitor?.Plugins?.App;
+    if(AppPlugin&&typeof AppPlugin.openSettings==='function'){
+      await AppPlugin.openSettings();
+      return;
+    }
+  }catch(_e){}
+  alert('Could not open settings automatically. Open Android Settings > Apps > DayScore > Notifications/Battery.');
 }
 
 // ── SETTINGS ───────────────────────────────────────────────────
@@ -1672,6 +1926,9 @@ document.getElementById('nextBtn').addEventListener('click',()=>{ if(++viewMonth
 document.getElementById('settingsBtn').addEventListener('click',e=>{ e.stopPropagation(); document.getElementById('settingsPanel').classList.toggle('open'); });
 document.getElementById('settingsBtn').addEventListener('click',()=>{ refreshReminderDiagnostics(); });
 document.getElementById('reminderTestBtn').addEventListener('click',()=>{ sendReminderTestNotification().catch(()=>{}); });
+document.getElementById('reminderTaskPathTestBtn').addEventListener('click',()=>{ sendTaskPathTestNotification().catch(()=>{}); });
+document.getElementById('reminderReportBtn').addEventListener('click',()=>{ runReminderSurvey().catch(()=>{}); });
+document.getElementById('reminderOpenSettingsBtn').addEventListener('click',()=>{ openAppNotificationSettings().catch(()=>{}); });
 document.addEventListener('click',e=>{ const p=document.getElementById('settingsPanel'); if(!p.contains(e.target)&&!e.target.closest('#settingsBtn'))p.classList.remove('open'); });
 document.getElementById('quickAddBtn').addEventListener('click',()=>{
   const t=today();
@@ -1686,7 +1943,7 @@ document.addEventListener('visibilitychange',()=>{
     lastForegroundRefreshAt = now;
     loadFromFirebase().then(()=>{ renderCalendar(); queueReminderSync(); renderUtilityDrawer(); });
   } else if(document.visibilityState==='hidden'){
-    queueReminderSync();
+    queueReminderSync(true);
   }
 });
 
@@ -1696,12 +1953,12 @@ if(window.Capacitor?.Plugins?.App?.addListener){
       queueReminderSync();
       refreshReminderDiagnostics();
     } else {
-      queueReminderSync();
+      queueReminderSync(true);
     }
   });
 }
 
-window.addEventListener('pagehide',()=>{ queueReminderSync(); });
+window.addEventListener('pagehide',()=>{ queueReminderSync(true); });
 
 // ── INIT ───────────────────────────────────────────────────────
 initTheme();

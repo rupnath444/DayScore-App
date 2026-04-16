@@ -16,6 +16,7 @@ export const REMINDER_ACTION_TYPE_ID = 'dayscore-task-actions';
 export const REMINDER_SNOOZE_MINUTES = 15;
 export const REMINDER_TRACKED_IDS_KEY = 'dayscore_native_reminder_ids';
 export const REMINDER_TRACKED_PAYLOADS_KEY = 'dayscore_native_reminder_payloads';
+export const REMINDER_OVERDUE_MARKS_KEY = 'dayscore_native_reminder_overdue_marks';
 
 export const POMO_END_KEY = 'dayscore_pomo_end';
 export const POMO_REMAINING_KEY = 'dayscore_pomo_remaining';
