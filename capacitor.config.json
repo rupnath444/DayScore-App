@@ -1,5 +1,12 @@
 {
   "appId": "com.rupnath.dayscore",
   "appName": "dayscore-app",
-  "webDir": "www"
+  "webDir": "www",
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_notify",
+      "iconColor": "#488AFF",
+      "sound": "beep.wav"
+    }
+  }
 }

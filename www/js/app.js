@@ -33,6 +33,7 @@ import {
   POMO_DURATION_KEY
 } from './config/constants.js';
 import { logDiag } from './diagnostics/debugPanel.js';
+import { logInfo, logWarn, logError, exportLogs } from './utilities/logger.js';
 
 // ── SINGLE FIREBASE CONFIG — used everywhere ───────────────────
 if(firebaseConfig.projectId !== EXPECTED_PROJECT_ID){
@@ -349,9 +350,10 @@ function renderLoginUI(){
 // ── AUTH FUNCTIONS ─────────────────────────────────────────────
 async function googleSignIn(){
   try {
+    logInfo('AUTH', 'Google sign in attempt');
     await signInWithPopup(auth, provider);
   } catch(e){
-    console.error('Google sign in:', e.code);
+    logError('AUTH', 'Google sign in failed', e);
     alert('Google sign in failed. Please use email/password.');
   }
 }
@@ -361,10 +363,11 @@ async function emailSignIn(){
   const password = document.getElementById('passwordInput')?.value;
   if(!email||!password){ alert('Please enter both email and password.'); return; }
   try {
+    logInfo('AUTH', `Email sign in attempt for ${email}`);
     setSyncStatus('syncing','Signing in…');
     await signInWithEmailAndPassword(auth, email, password);
   } catch(e){
-    console.error('Email sign in:', e.code);
+    logError('AUTH', `Email sign in failed: ${e.code}`, e);
     setSyncStatus('error','Sign in failed');
     if(e.code==='auth/user-not-found'||e.code==='auth/invalid-credential'||e.code==='auth/wrong-password'){
       alert('No account found with this email. Please create an account first using "Create Account".');
@@ -388,8 +391,10 @@ async function emailRegister(){
   if(!email||!password){ alert('Please enter email and password.'); return; }
   if(password.length<6){ alert('Password must be at least 6 characters.'); return; }
   try {
+    logInfo('AUTH', `Email register attempt for ${email}`);
     await createUserWithEmailAndPassword(auth, email, password);
   } catch(e){
+    logError('AUTH', `Email register failed: ${e.code}`, e);
     if(e.code==='auth/email-already-in-use'){
       alert('An account with this email already exists. Please sign in instead.');
     } else {
@@ -546,13 +551,13 @@ async function loadFromFirebase(){
       setSyncStatus('synced','Ready — local-first mode active');
     }
   } catch(e){
+    logError('SYNC', `Load from Firebase failed: ${e?.code || 'unknown'}`, e);
     setSyncStatus('error','Could not load cloud data, using local');
     setOfflineBanner(true,'Cloud unavailable, using local data');
     appendSyncLog(uid,'error',`load-failed:${e?.code||'unknown'}`);
     if(cachedState){
       state = normalizeStateShape(cachedState);
     }
-    console.error('Load error:',e);
   }
 }
 
@@ -1300,14 +1305,10 @@ function isPermissionGranted(status){
   return value==='granted';
 }
 function setReminderDiag(msg){
-  const el=document.getElementById('reminderDiag');
-  if(el) el.textContent=msg;
+  void msg;
 }
 function setReminderReport(msg){
-  const el=document.getElementById('reminderReport');
-  if(!el) return;
-  el.textContent=msg;
-  el.style.display=msg?'block':'none';
+  void msg;
 }
 function formatReminderTime(d){
   try{
@@ -1439,35 +1440,7 @@ async function runReminderSurvey(){
   }
 }
 async function refreshReminderDiagnostics(){
-  const cap=window.Capacitor;
-  let platform='unknown';
-  try{ platform=String(cap?.getPlatform?.()||'unknown'); }catch(_e){}
-  const pluginReady=!!(cap?.Plugins?.LocalNotifications);
-  if(canUseNativeReminders()){
-    try{
-      const LocalNotifications=getNativeReminderPlugin();
-      const perm=await LocalNotifications.checkPermissions();
-      let exact='n/a';
-      if(typeof LocalNotifications.checkExactNotificationSetting==='function'){
-        try{
-          const exactStatus=await LocalNotifications.checkExactNotificationSetting();
-          exact=String(exactStatus?.value ?? exactStatus?.exact ?? exactStatus?.exactAlarm ?? exactStatus?.enabled ?? 'unknown');
-          reminderExactAllowed=isExactSettingAllowed(exact);
-        }catch(_e){}
-      }
-      const reliability=reminderExactAllowed?'background: reliable':'background: limited (enable exact alarms)';
-      setReminderDiag(`Native reminders: ${perm.display || perm.receive || perm.permission || 'unknown'} | exact: ${exact} | ${reliability} | platform: ${platform}`);
-    }catch(e){
-      setReminderDiag('Native reminders: error reading status');
-    }
-    return;
-  }
-  const hasCap=typeof cap!=='undefined';
-  if(!hasCap){
-    setReminderDiag('Native runtime not ready yet');
-    return;
-  }
-  setReminderDiag(`Native reminders unavailable (plugin: ${pluginReady?'ready':'missing'}, platform: ${platform})`);
+  void reminderExactAllowed;
 }
 async function initNativeReminderListeners(){
   if(reminderListenerBound||!canUseNativeReminders()) return;
@@ -1528,10 +1501,11 @@ async function ensureNativeReminderReady(showAlertOnFailure=false){
         id:REMINDER_CHANNEL_ID,
         name:'DayScore Reminders',
         description:'Task due reminders',
-        importance:4,
+        importance:5,
         visibility:1,
         vibration:true,
-        sound:'default'
+        lights:true,
+        sound:'beep.wav'
       });
       reminderChannelReady=true;
     }
@@ -1554,7 +1528,7 @@ async function ensureNativeReminderReady(showAlertOnFailure=false){
     }
     return true;
   }catch(e){
-    console.warn('Native reminder permission/setup failed:',e);
+    logError('REMINDER_SETUP', 'Native reminder permission/setup failed', e);
     setReminderDiag('Native reminders: setup failed');
     if(showAlertOnFailure) alert('Could not enable reminders on this device. Please check app notification settings.');
     return false;
@@ -1688,7 +1662,7 @@ async function syncNativeReminders(){
       setSyncStatus('synced',`Scheduled ${desired.length} reminder${desired.length===1?'':'s'}`);
       return;
     }catch(e){
-      console.warn('DayScore native reminder sync failed, falling back to LocalNotifications:',e);
+      logWarn('REMINDER_SYNC', 'DayScore native reminder sync failed, falling back to LocalNotifications', e);
     }
   }
 
@@ -1747,11 +1721,10 @@ async function syncNativeReminders(){
 function queueReminderSync(immediate=false){
   clearTimeout(reminderSyncTimer);
   if(immediate){
-    syncNativeReminders().catch(e=>console.warn('Native reminder sync failed:',e));
-    refreshReminderDiagnostics();
+    syncNativeReminders().catch(e=>logWarn('REMINDER_SYNC', 'Native reminder sync failed', e));
     return;
   }
-  reminderSyncTimer=setTimeout(()=>{ syncNativeReminders().catch(e=>console.warn('Native reminder sync failed:',e)); refreshReminderDiagnostics(); },100);
+  reminderSyncTimer=setTimeout(()=>{ syncNativeReminders().catch(e=>logWarn('REMINDER_SYNC', 'Native reminder sync failed', e)); },100);
 }
 async function requestNotifPermission(){
   if(canUseNativeReminders()){
@@ -1925,10 +1898,6 @@ document.getElementById('prevBtn').addEventListener('click',()=>{ if(--viewMonth
 document.getElementById('nextBtn').addEventListener('click',()=>{ if(++viewMonth>11){viewMonth=0;viewYear++;} renderCalendar(); });
 document.getElementById('settingsBtn').addEventListener('click',e=>{ e.stopPropagation(); document.getElementById('settingsPanel').classList.toggle('open'); });
 document.getElementById('settingsBtn').addEventListener('click',()=>{ refreshReminderDiagnostics(); });
-document.getElementById('reminderTestBtn').addEventListener('click',()=>{ sendReminderTestNotification().catch(()=>{}); });
-document.getElementById('reminderTaskPathTestBtn').addEventListener('click',()=>{ sendTaskPathTestNotification().catch(()=>{}); });
-document.getElementById('reminderReportBtn').addEventListener('click',()=>{ runReminderSurvey().catch(()=>{}); });
-document.getElementById('reminderOpenSettingsBtn').addEventListener('click',()=>{ openAppNotificationSettings().catch(()=>{}); });
 document.addEventListener('click',e=>{ const p=document.getElementById('settingsPanel'); if(!p.contains(e.target)&&!e.target.closest('#settingsBtn'))p.classList.remove('open'); });
 document.getElementById('quickAddBtn').addEventListener('click',()=>{
   const t=today();
@@ -1951,7 +1920,6 @@ if(window.Capacitor?.Plugins?.App?.addListener){
   window.Capacitor.Plugins.App.addListener('appStateChange',({isActive})=>{
     if(isActive){
       queueReminderSync();
-      refreshReminderDiagnostics();
     } else {
       queueReminderSync(true);
     }
