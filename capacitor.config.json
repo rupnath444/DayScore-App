@@ -3,6 +3,15 @@
   "appName": "dayscore-app",
   "webDir": "www",
   "plugins": {
+    "SocialLogin": {
+      "providers": {
+        "google": true
+      },
+      "google": {
+        "webClientId": "1042840162617-bbghct21d2j9ookvc13tffv96ur7ihce.apps.googleusercontent.com",
+        "mode": "online"
+      }
+    },
     "LocalNotifications": {
       "smallIcon": "ic_stat_notify",
       "iconColor": "#488AFF",

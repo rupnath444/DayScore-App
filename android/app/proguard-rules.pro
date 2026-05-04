@@ -5,17 +5,51 @@
 # For more details, see
 #   http://developer.android.com/guide/developing/tools/proguard.html
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# ============ SECURITY: Keep Firebase & Capacitor intact ============
+# Firebase needs these classes for runtime reflection
+-keep class com.google.firebase.** { *; }
+-keep class com.google.android.gms.** { *; }
+-keep class com.google.common.** { *; }
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Capacitor needs these for native bridging
+-keep class com.capacitorjs.** { *; }
+-keep class android.webkit.JavascriptInterface { *; }
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Keep Kotlin stdlib - needed for runtime
+-keep class kotlin.** { *; }
+-dontwarn kotlin.**
+-keep class kotlinx.** { *; }
+-dontwarn kotlinx.**
+
+# Keep custom Firebase security rules validation
+-keep class com.rupnath.dayscore.** { *; }
+
+# OBFUSCATE: Everything else gets obfuscated for security
+-repackageclasses 'a'
+-allowaccessmodification
+-obfuscationdictionary proguard-obfuscation-dict.txt
+
+# ============ SECURITY: Debugging ============
+# Strip line number info from release builds (reduces binary size & hides code structure)
+-renamesourcefileattribute SourceFile
+-keepattributes SourceFile
+
+# Keep manifest classes
+-keepclasseswithmembernames class * {
+    native <methods>;
+}
+
+# Keep custom app components
+-keepclasseswithmembers class * {
+    public <init>(android.content.Context, android.util.AttributeSet);
+}
+
+# WARNING: Removing this can break Firebase token verification
+-keepattributes Signature
+-keepattributes *Annotation*
+
+# ============ SECURITY: Crash reporting & logs ============
+# Keep exception classes for crash logs
+-keep public class * extends java.lang.Exception { *; }
+-keep public class * extends java.lang.Throwable { *; }
+

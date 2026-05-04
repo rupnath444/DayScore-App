@@ -1,5 +1,5 @@
 /* SETTINGS */
-.settings-panel{position:fixed;top:64px;right:16px;width:300px;background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:18px;z-index:200;box-shadow:0 8px 40px var(--shadow);display:none;max-height:80vh;overflow-y:auto;}
+.settings-panel{position:fixed;top:64px;right:16px;width:300px;background:var(--surface);border:1px solid var(--border2);border-radius:14px;padding:18px;z-index:200;box-shadow:0 6px 18px rgba(0,0,0,.05);display:none;max-height:80vh;overflow-y:auto;}
 .settings-panel.open{display:block;}
 .settings-title{font-family:'Bebas Neue',sans-serif;font-size:18px;letter-spacing:2px;color:var(--text);margin-bottom:14px;}
 .settings-section{display:flex;flex-direction:column;gap:10px;margin-bottom:16px;}

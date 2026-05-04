@@ -1,0 +1,31 @@
+# ProGuard obfuscation dictionary
+# Random class and method names for additional obfuscation
+# This file is referenced by ProGuard/R8 to generate predictable obfuscated names
+# For production builds, this helps maintain consistency across builds
+
+a
+b
+c
+d
+e
+f
+g
+h
+i
+j
+k
+l
+m
+n
+o
+p
+q
+r
+s
+t
+u
+v
+w
+x
+y
+z

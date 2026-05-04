@@ -2,6 +2,7 @@ import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.12.0/fireba
 import {
   getAuth, GoogleAuthProvider,
   signInWithPopup, signInWithEmailAndPassword,
+  signInWithCredential,
   createUserWithEmailAndPassword, signOut,
   onAuthStateChanged, setPersistence, indexedDBLocalPersistence,
   browserLocalPersistence, inMemoryPersistence
@@ -33,7 +34,8 @@ import {
   POMO_DURATION_KEY
 } from './config/constants.js';
 import { logDiag } from './diagnostics/debugPanel.js';
-import { logInfo, logWarn, logError, exportLogs } from './utilities/logger.js';
+import { logInfo, logWarn, logError, exportLogs, clearLogs, getPendingLogsForUpload, markLogsUploaded } from './utilities/logger.js';
+import { tapHaptic, completeHaptic } from './utilities/haptics.js';
 
 // ── SINGLE FIREBASE CONFIG — used everywhere ───────────────────
 if(firebaseConfig.projectId !== EXPECTED_PROJECT_ID){
@@ -44,6 +46,9 @@ const fbApp   = initializeApp(firebaseConfig);
 const auth    = getAuth(fbApp);
 const db      = getFirestore(fbApp);
 const provider = new GoogleAuthProvider();
+const nativeGoogleAuth = window.Capacitor?.Plugins?.SocialLogin || null;
+const nativeGoogleClientId = '1042840162617-bbghct21d2j9ookvc13tffv96ur7ihce.apps.googleusercontent.com';
+let nativeGoogleAuthReady = false;
 
 // If app was previously pointed at another project, clear session once.
 const prevProject = localStorage.getItem(PROJECT_MARKER_KEY);
@@ -74,6 +79,23 @@ const isNative  = typeof window.Capacitor !== 'undefined';
 // Android device builds only.
 const IS_RELEASE_BUILD = isAndroid && isNative;
 
+async function initNativeGoogleAuth(){
+  if(!isAndroid || !isNative || !nativeGoogleAuth || nativeGoogleAuthReady) return;
+  try {
+    await nativeGoogleAuth.initialize({
+      google: {
+        webClientId: nativeGoogleClientId,
+        mode: 'online'
+      }
+    });
+    nativeGoogleAuthReady = true;
+  } catch(e){
+    console.warn('Native Google auth initialization failed:', e);
+  }
+}
+
+await initNativeGoogleAuth();
+
 // ── STATE ──────────────────────────────────────────────────────
 
 let state = { tasks:{}, notes:{}, threshold:50, utility:{goalTarget:'2027-02-01',goalName:'Days until GATE 2027',goalNote:'',pomoMinutes:25}, diary:{}, updatedAt:0 };
@@ -96,6 +118,9 @@ let lastForegroundRefreshAt = 0;
 let lastKnownUid = localStorage.getItem(LOCAL_LAST_UID_KEY)||'';
 let cloudReachable = true;
 let lastCloudCheckAt = 0;
+let logUploadTimer = null;
+let logUploadInterval = null;
+let logUploadInFlight = false;
 
 function getThreshold(){ return (state.threshold||50)/100; }
 
@@ -316,24 +341,33 @@ document.getElementById('themeToggle').addEventListener('click',()=>{
 // ── LOGIN UI ───────────────────────────────────────────────────
 function renderLoginUI(){
   const fields = document.getElementById('loginFields');
-  const showGoogle = !isAndroid && !isNative;
+  const showGoogle = true;
 
   fields.innerHTML = `
-    ${showGoogle ? `
-      <button class="google-btn" id="googleSignInBtn">
-        <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
-        Continue with Google
-      </button>
-      <div class="auth-divider">or use email</div>
-    ` : `<div class="login-note">Sign in with your email and password.</div>`}
-    <input class="auth-input" id="emailInput" type="email" placeholder="Email address" autocomplete="email">
-    <div style="position:relative;width:100%">
-      <input class="auth-input" id="passwordInput" type="password" placeholder="Password (6+ chars)" style="padding-right:56px" autocomplete="current-password">
-      <span id="togglePwd" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:9px;font-weight:bold;color:var(--accent);font-family:'DM Mono',monospace">SHOW</span>
+    <div class="login-auth-stack">
+      <div class="login-auth-top">
+        <div class="login-card-title">Welcome</div>
+        <div class="login-note">Sign in with your email and password.</div>
+        <input class="auth-input" id="emailInput" type="email" placeholder="Email address" autocomplete="email">
+        <div style="position:relative;width:100%">
+          <input class="auth-input" id="passwordInput" type="password" placeholder="Password (6+ chars)" style="padding-right:56px" autocomplete="current-password">
+          <span id="togglePwd" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);cursor:pointer;font-size:9px;font-weight:bold;color:var(--accent);font-family:'DM Mono',monospace">SHOW</span>
+        </div>
+        <button class="auth-btn" id="emailSignInBtn">Sign In</button>
+        <button class="auth-btn secondary" id="emailRegisterBtn">Create Account</button>
+      </div>
+      ${showGoogle ? `
+        <div class="login-google-panel">
+          <div class="login-google-label">Or continue with Google</div>
+          <button class="google-btn" id="googleSignInBtn">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+            Continue with Google
+          </button>
+          <div class="login-note">Quick access for existing Google accounts.</div>
+        </div>
+      ` : ''}
+      <div class="login-note">All devices use the same account and data.<br>Project: dayscore-sync</div>
     </div>
-    <button class="auth-btn" id="emailSignInBtn">Sign In</button>
-    <button class="auth-btn secondary" id="emailRegisterBtn">Create Account</button>
-    <div class="login-note">All devices use the same account and data.<br>Project: dayscore-sync</div>
   `;
 
   document.getElementById('togglePwd').onclick = () => {
@@ -351,10 +385,35 @@ function renderLoginUI(){
 async function googleSignIn(){
   try {
     logInfo('AUTH', 'Google sign in attempt');
+    if(isAndroid && isNative && nativeGoogleAuth){
+      await initNativeGoogleAuth();
+      const login = await nativeGoogleAuth.login({
+        provider: 'google',
+        options: {
+          filterByAuthorizedAccounts: false,
+          autoSelectEnabled: false
+        }
+      });
+      const idToken = login?.result?.idToken;
+      if(!idToken) throw new Error('Google sign in did not return an idToken.');
+      const credential = GoogleAuthProvider.credential(idToken);
+      await signInWithCredential(auth, credential);
+      return;
+    }
     await signInWithPopup(auth, provider);
   } catch(e){
     logError('AUTH', 'Google sign in failed', e);
-    alert('Google sign in failed. Please use email/password.');
+    const msg = String(e?.message || e?.code || 'unknown-error');
+    const detail = msg.toLowerCase();
+    if(detail.includes('10') || detail.includes('developer_error') || detail.includes('12500')){
+      alert('Google sign in failed: Android OAuth SHA mismatch (DEVELOPER_ERROR). Add this app signing SHA-1 to Firebase Android OAuth client, then rebuild.');
+    } else if(detail.includes('no credentials') || detail.includes('nocredentialexception')){
+      alert('Google sign in failed: no eligible Google account on device. Add a Google account on the phone and retry.');
+    } else if(detail.includes('network')){
+      alert('Google sign in failed: network issue. Check internet and retry.');
+    } else {
+      alert('Google sign in failed: ' + msg);
+    }
   }
 }
 
@@ -444,6 +503,7 @@ onAuthStateChanged(auth, async (user)=>{
     refreshReminderDiagnostics();
     setTimeout(()=>{ requestNotifPermission(); queueReminderSync(); refreshReminderDiagnostics(); },1500);
     renderUtilityDrawer();
+    startLogUploadWorker();
 
     loading.classList.add('hidden');
     login.classList.add('hidden');
@@ -473,6 +533,7 @@ onAuthStateChanged(auth, async (user)=>{
         loading.classList.add('hidden');
         login.classList.add('hidden');
         main.style.display = 'flex';
+        stopLogUploadWorker();
         return;
       }
     }
@@ -482,6 +543,7 @@ onAuthStateChanged(auth, async (user)=>{
     setReminderDiag('Reminder status: sign in required');
     document.getElementById('settingsUserEmail').textContent = 'Not signed in';
     setOfflineBanner(false);
+    stopLogUploadWorker();
     loading.classList.add('hidden');
     login.classList.remove('hidden');
     main.style.display = 'none';
@@ -493,6 +555,71 @@ onAuthStateChanged(auth, async (user)=>{
 function setSyncStatus(s,t){
   document.getElementById('syncDot').className = 'sync-dot '+s;
   document.getElementById('syncText').textContent = t;
+}
+
+function sanitizeLogForUpload(log){
+  const redacted = String(log?.detail ?? '')
+    .replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/ig, '[redacted-email]')
+    .replace(/(password|token|secret)\s*[:=]\s*[^\s,;]+/ig, '$1=[redacted]')
+    .slice(0, 2000);
+  return {
+    id: String(log?.id || ''),
+    ts: Number(log?.ts || Date.now()),
+    level: String(log?.level || 'WARN').toUpperCase(),
+    cat: String(log?.cat || 'GENERAL').slice(0, 64),
+    msg: String(log?.msg || '').slice(0, 240),
+    detail: redacted
+  };
+}
+
+async function flushLogsToFirebase(limit=25){
+  if(logUploadInFlight || !currentUser || offlineMode) return;
+  const pending = getPendingLogsForUpload(limit, 'WARN');
+  if(!pending.length) return;
+  logUploadInFlight = true;
+  try{
+    const uid = currentUser.uid;
+    for(const raw of pending){
+      const entry = sanitizeLogForUpload(raw);
+      if(!entry.id) continue;
+      const docId = String(entry.id).replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 140);
+      await setDoc(
+        doc(db,'users',uid,'errorLogs',docId),
+        {
+          ...entry,
+          uid,
+          source: 'client',
+          platform: isNative ? 'native-webview' : 'web',
+          uploadedAt: Date.now()
+        },
+        { merge: true }
+      );
+    }
+    markLogsUploaded(pending.map(x=>x.id));
+  }catch(e){
+    console.warn('Automatic log upload failed:', e);
+  }finally{
+    logUploadInFlight = false;
+  }
+}
+
+function scheduleLogUpload(delayMs=2000){
+  clearTimeout(logUploadTimer);
+  logUploadTimer = setTimeout(()=>{ flushLogsToFirebase().catch(()=>{}); }, Math.max(0, delayMs));
+}
+
+function startLogUploadWorker(){
+  stopLogUploadWorker();
+  logUploadInterval = setInterval(()=>{ flushLogsToFirebase().catch(()=>{}); }, 45000);
+  scheduleLogUpload(1200);
+}
+
+function stopLogUploadWorker(){
+  clearTimeout(logUploadTimer);
+  if(logUploadInterval){
+    clearInterval(logUploadInterval);
+    logUploadInterval = null;
+  }
 }
 
 async function loadFromFirebase(){
@@ -629,7 +756,7 @@ function renderWeekView(){
     const isTod=isToday(y,m,day);
     let cls='heat-day';
     if(st==='good') cls+=' good';
-    else if(st==='bad') cls+=' bad';
+    else if(st==='bad' && !isTod) cls+=' bad';
     if(isTod) cls+=' today';
     html+=`<div class="${cls}" title="${SHORT_DAYS[i]} ${day}" onclick="openModal('${key}')"></div>`;
   }
@@ -672,6 +799,11 @@ function renderStats(){
     const key=toKey(viewYear,viewMonth,d);
     if(!isPast(viewYear,viewMonth,d)&&!isToday(viewYear,viewMonth,d)) continue;
     const st=dayStatus(key);
+    if(isToday(viewYear,viewMonth,d)){
+      if(st==='good') good++;
+      else empty++;
+      continue;
+    }
     if(st==='good') good++;
     else if(st==='bad') bad++;
     else empty++;
@@ -753,7 +885,7 @@ function renderPomodoro(){
   }
   if(s.running&&s.remaining===0){
     setPomodoroState(false,0,total);
-    if(typeof navigator!=='undefined'&&navigator.vibrate) navigator.vibrate([20,40,20]);
+    completeHaptic().catch(()=>{});
   }
 }
 function startPomodoroTicker(){
@@ -1062,6 +1194,7 @@ function renderUtilityDrawer(){
 // ── MODAL ──────────────────────────────────────────────────────
 let activeKey=null;
 window.openModal=function(key){
+  tapHaptic().catch(()=>{});
   activeKey=key;
   const[ys,ms,ds]=key.split('-').map(Number);
   const y=ys,m=ms-1,d=ds;
@@ -1842,7 +1975,16 @@ function updateSettingsUI(){
   document.querySelectorAll('.preset-btn').forEach(b=>b.classList.toggle('active',parseInt(b.textContent)===v));
 }
 window.setPreset=function(v){ state.threshold=v; persist(); updateSettingsUI(); renderCalendar(); };
-document.getElementById('thresholdSlider').addEventListener('input',e=>{ state.threshold=parseInt(e.target.value); persist(); updateSettingsUI(); renderCalendar(); });
+let thresholdSliderStartValue=null;
+const thresholdSlider=document.getElementById('thresholdSlider');
+thresholdSlider?.addEventListener('pointerdown',e=>{ thresholdSliderStartValue=String(e.target?.value ?? thresholdSlider.value); });
+thresholdSlider?.addEventListener('input',e=>{ state.threshold=parseInt(e.target.value); persist(); updateSettingsUI(); renderCalendar(); });
+thresholdSlider?.addEventListener('change',e=>{
+  const next=String(e.target.value);
+  if(thresholdSliderStartValue===null || thresholdSliderStartValue!==next){ tapHaptic().catch(()=>{}); }
+  thresholdSliderStartValue=null;
+});
+thresholdSlider?.addEventListener('pointerup',()=>{ thresholdSliderStartValue=null; });
 
 function openDiaryBookModal(){
   const overlay=document.getElementById('diaryModalOverlay');
@@ -1876,6 +2018,46 @@ function closeDiaryBookModal(){
   if(overlay) overlay.classList.remove('open');
 }
 
+async function handleExportDebugLogs(){
+  const logs=exportLogs();
+  if(!logs){
+    alert('No debug logs yet. Reproduce an issue first, then export again.');
+    return;
+  }
+
+  let copied=false;
+  try{
+    if(navigator.clipboard?.writeText){
+      await navigator.clipboard.writeText(logs);
+      copied=true;
+    }
+  }catch(_e){}
+
+  try{
+    const fileName=`dayscore-debug-logs-${new Date().toISOString().replace(/[:.]/g,'-')}.txt`;
+    const blob=new Blob([logs],{type:'text/plain;charset=utf-8'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.download=fileName;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url),1000);
+    alert(copied?'Debug logs copied and downloaded.':'Debug logs downloaded.');
+  }catch(e){
+    logError('LOGGER', 'Failed to export debug logs', e);
+    if(copied) alert('Debug logs copied to clipboard. Paste them in your bug report.');
+    else alert('Could not export debug logs on this device.');
+  }
+}
+
+function handleClearDebugLogs(){
+  if(!confirm('Clear all saved debug logs?')) return;
+  clearLogs();
+  alert('Debug logs cleared.');
+}
+
 // ── EVENTS ─────────────────────────────────────────────────────
 document.getElementById('closeBtn').addEventListener('click',closeModal);
 document.getElementById('diaryModalClose').addEventListener('click',closeDiaryBookModal);
@@ -1898,6 +2080,8 @@ document.getElementById('prevBtn').addEventListener('click',()=>{ if(--viewMonth
 document.getElementById('nextBtn').addEventListener('click',()=>{ if(++viewMonth>11){viewMonth=0;viewYear++;} renderCalendar(); });
 document.getElementById('settingsBtn').addEventListener('click',e=>{ e.stopPropagation(); document.getElementById('settingsPanel').classList.toggle('open'); });
 document.getElementById('settingsBtn').addEventListener('click',()=>{ refreshReminderDiagnostics(); });
+document.getElementById('exportLogsBtn')?.addEventListener('click',()=>{ handleExportDebugLogs().catch(()=>{}); });
+document.getElementById('clearLogsBtn')?.addEventListener('click',handleClearDebugLogs);
 document.addEventListener('click',e=>{ const p=document.getElementById('settingsPanel'); if(!p.contains(e.target)&&!e.target.closest('#settingsBtn'))p.classList.remove('open'); });
 document.getElementById('quickAddBtn').addEventListener('click',()=>{
   const t=today();
@@ -1910,7 +2094,7 @@ document.addEventListener('visibilitychange',()=>{
     const now = nowTs();
     if(now - lastForegroundRefreshAt < 5000) return;
     lastForegroundRefreshAt = now;
-    loadFromFirebase().then(()=>{ renderCalendar(); queueReminderSync(); renderUtilityDrawer(); });
+    loadFromFirebase().then(()=>{ renderCalendar(); queueReminderSync(); renderUtilityDrawer(); scheduleLogUpload(1000); });
   } else if(document.visibilityState==='hidden'){
     queueReminderSync(true);
   }
@@ -1920,6 +2104,7 @@ if(window.Capacitor?.Plugins?.App?.addListener){
   window.Capacitor.Plugins.App.addListener('appStateChange',({isActive})=>{
     if(isActive){
       queueReminderSync();
+      scheduleLogUpload(1000);
     } else {
       queueReminderSync(true);
     }

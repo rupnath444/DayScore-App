@@ -7,7 +7,7 @@
 .day-tile:hover{border-color:var(--border2);transform:translateY(-1px);box-shadow:0 4px 16px var(--shadow);}
 .day-tile:active{transform:scale(.97);}
 .day-tile.empty-slot{background:var(--surface3);border-color:var(--border);cursor:default;pointer-events:none;opacity:.45;}
-.day-tile.today{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset,0 0 20px var(--accent-glow);}
+.day-tile.today{border-color:var(--accent);background:linear-gradient(rgba(108,92,231,.10),rgba(108,92,231,.10)),var(--surface2);box-shadow:0 0 0 2px var(--accent) inset,0 0 20px var(--accent-glow);}
 .day-tile.good-day{background:linear-gradient(rgba(0,230,118,.16),rgba(0,230,118,.16)),var(--surface2);border-color:var(--green-border);}
 .day-tile.good-day:hover{border-color:var(--green-dim);}
 .day-tile.bad-day{background:linear-gradient(rgba(255,82,82,.16),rgba(255,82,82,.16)),var(--surface2);border-color:var(--red-border);}
